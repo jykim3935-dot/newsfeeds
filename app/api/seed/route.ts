@@ -71,7 +71,11 @@ const SOURCES = [
 const KEYWORDS = [
   // Priority 1 (핵심)
   { group_name: 'ACRYL 제품', category: 'competitive', content_types: ['news', 'blog', 'report'], priority: 1, keywords: ['ACRYL', '아크릴', 'JONATHAN', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA'] },
-  { group_name: '직접 경쟁사', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['GenOn AI', 'GenOn 마인즈', '마인즈앤컴퍼니', 'VESSL AI', 'Run:ai', '래블업', 'Lablup', '노타 AI', 'Nota AI', '마키나락스', 'MakinaRocks', '모레 Moreh', '리벨리온 AI', 'Rebellions', '퓨리오사AI', 'FuriosaAI'] },
+  { group_name: '경쟁사-GenOn', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['GenOn AI', '마인즈앤컴퍼니', '제논데이타', '제논 AI'] },
+  { group_name: '경쟁사-래블업', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['래블업', 'Lablup', 'Backend.AI'] },
+  { group_name: '경쟁사-마키나락스', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['마키나락스', 'MakinaRocks', 'Makinarocks AI'] },
+  { group_name: '경쟁사-VESSL/Run:ai', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['VESSL AI', 'Run:ai', 'Run.ai'] },
+  { group_name: '경쟁사-AI칩', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['리벨리온 AI', 'Rebellions', '퓨리오사AI', 'FuriosaAI'] },
   { group_name: '핵심 파트너', category: 'customer', content_types: ['news', 'investment'], priority: 1, keywords: ['KT AI', '삼성SDS', '메가존클라우드'] },
   { group_name: 'GPU 인프라', category: 'tech', content_types: ['news', 'blog', 'research'], priority: 1, keywords: ['GPU 클라우드', 'GPU 오케스트레이션', 'GPU cluster', 'GPUaaS'] },
   { group_name: 'NVIDIA 생태계', category: 'tech', content_types: ['news', 'blog', 'global'], priority: 1, keywords: ['NVIDIA', '엔비디아', 'Blackwell', 'H100', 'B200', 'GB200'] },

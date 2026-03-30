@@ -9,7 +9,7 @@ const parser = new Parser({ timeout: 5000 });
 // Google News RSS — 무료, API 키 불필요
 // https://news.google.com/rss/search?q=keyword&hl=ko&gl=KR&ceid=KR:ko
 function buildGoogleNewsUrl(keywords: string[], lang: 'ko' | 'en' = 'ko'): string {
-  const query = keywords.slice(0, 3).join(' OR ');
+  const query = keywords.slice(0, 5).join(' OR ');
   const encoded = encodeURIComponent(query);
   if (lang === 'ko') {
     return `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
@@ -26,7 +26,7 @@ export const googlenewsCollector: Collector = {
       .select('*')
       .eq('enabled', true)
       .order('priority')
-      .limit(6);
+      .limit(15);
 
     if (!groups || groups.length === 0) return [];
 

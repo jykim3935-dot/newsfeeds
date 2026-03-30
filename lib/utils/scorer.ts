@@ -40,7 +40,7 @@ const SCORING_RULES: Array<{
   // GPU 인프라 시장 (8점, yellow)
   { keywords: ['GPU 클라우드', 'GPU 오케스트레이션', 'GPU cluster', 'GPUaaS', 'GPU as a Service'], score: 8, urgency: 'yellow', category: 'market', label: 'GPU 인프라 시장 변화' },
   // AI 인프라 경쟁사 (8점, yellow)
-  { keywords: ['래블업', 'Lablup', 'Backend.AI', '노타', 'Nota AI', '마키나락스', 'MakinaRocks', 'CoreWeave'], score: 8, urgency: 'yellow', category: 'competitive', label: 'AI 인프라 경쟁 동향' },
+  { keywords: ['래블업', 'Lablup', 'Backend.AI', 'Nota AI', '마키나락스', 'MakinaRocks', 'CoreWeave', 'VESSL AI'], score: 8, urgency: 'yellow', category: 'competitive', label: 'AI 인프라 경쟁 동향' },
   // 파트너사 (8점, yellow)
   { keywords: ['KT AI', '삼성SDS', '메가존클라우드'], score: 8, urgency: 'yellow', category: 'customer', label: '파트너사 동향 — 협업 기회' },
 
