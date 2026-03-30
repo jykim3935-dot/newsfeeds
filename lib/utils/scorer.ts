@@ -33,9 +33,9 @@ const SCORING_RULES: Array<{
   category: Category;
   label: string;
 }> = [
-  // 직접 경쟁사 (9점, red)
-  { keywords: ['제논', 'GenOn', '마인즈앤컴퍼니'], score: 9, urgency: 'red', category: 'competitive', label: '직접 경쟁사 동향 — 영업/전략 대응' },
-  { keywords: ['Run:ai', 'Run.ai'], score: 9, urgency: 'red', category: 'competitive', label: 'GPU 오케스트레이션 글로벌 경쟁사' },
+  // 직접 경쟁사 (8점, yellow) — red 남발 방지
+  { keywords: ['제논', 'GenOn', '마인즈앤컴퍼니'], score: 8, urgency: 'yellow', category: 'competitive', label: '직접 경쟁사 동향' },
+  { keywords: ['Run:ai', 'Run.ai'], score: 8, urgency: 'yellow', category: 'competitive', label: 'GPU 오케스트레이션 글로벌 경쟁사' },
 
   // GPU 인프라 시장 (8점, yellow)
   { keywords: ['GPU 클라우드', 'GPU 오케스트레이션', 'GPU cluster', 'GPUaaS', 'GPU as a Service'], score: 8, urgency: 'yellow', category: 'market', label: 'GPU 인프라 시장 변화' },

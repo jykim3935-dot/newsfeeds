@@ -9,17 +9,20 @@ export function renderNewsletter(data: NewsletterData): string {
 
   // 외부 인텔리전스만 점수 기반 정렬
   const relevant = external.filter((a) => (a.relevance_score || 0) >= 5);
-  const sorted = [...relevant].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
-  const redArticles = sorted.filter((a) => a.urgency === 'red');
-  const yellowArticles = sorted.filter((a) => a.urgency === 'yellow');
-  const highArticles = sorted.filter((a) => (a.relevance_score || 0) >= 7);
-  const lowArticles = sorted.filter((a) => (a.relevance_score || 0) >= 5 && (a.relevance_score || 0) < 7);
-  const total = relevant.length;
+
+  // 카테고리 다양성 확보: 같은 카테고리 기사는 최대 5건
+  const diversified = diversifyArticles(relevant);
+
+  const redArticles = diversified.filter((a) => a.urgency === 'red');
+  const yellowArticles = diversified.filter((a) => a.urgency === 'yellow');
+  const highArticles = diversified.filter((a) => (a.relevance_score || 0) >= 7);
+  const lowArticles = diversified.filter((a) => (a.relevance_score || 0) >= 5 && (a.relevance_score || 0) < 7);
+  const total = diversified.length;
   const deepCount = external.filter((a) => a.deep_summary).length;
 
   const briefText = executiveBrief && !executiveBrief.includes('오류') && !executiveBrief.includes('시간 초과')
     ? executiveBrief
-    : buildAutoBrief(sorted);
+    : buildAutoBrief(diversified);
 
   const redCards = redArticles.map((a) => renderRedCard(a)).join('');
   const yellowCards = yellowArticles.map((a) => renderYellowCard(a)).join('');
@@ -100,15 +103,56 @@ export function renderNewsletter(data: NewsletterData): string {
 </html>`;
 }
 
-function buildAutoBrief(articles: Article[]): string {
+function diversifyArticles(articles: Article[]): Article[] {
   const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
-  const top5 = sorted.slice(0, 5);
-  if (top5.length === 0) return '오늘 수집된 기사가 없습니다.';
-  const lines = top5.map((a, i) => {
-    const detail = a.impact_comment || a.summary || '';
-    return `${i + 1}. [${a.category || '기타'}] ${a.title}\n   ${detail}`;
+  const categoryCount: Record<string, number> = {};
+  const MAX_PER_CATEGORY = 5;
+
+  return sorted.filter((a) => {
+    const cat = a.category || 'tech';
+    categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+    return categoryCount[cat] <= MAX_PER_CATEGORY;
   });
-  return lines.join('\n\n');
+}
+
+function buildAutoBrief(articles: Article[]): string {
+  if (articles.length === 0) return '오늘 수집된 기사가 없습니다.';
+
+  // 카테고리별 대표 기사 선정 (다양한 시각)
+  const categories: Record<string, Article[]> = {};
+  for (const a of articles) {
+    const cat = a.category || 'tech';
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push(a);
+  }
+
+  const catLabels: Record<string, string> = {
+    competitive: '경쟁 동향',
+    market: '시장 변화',
+    tech: '기술 동향',
+    regulation: '정책/규제',
+    investment: '투자/M&A',
+    customer: '파트너/고객',
+  };
+
+  const sections: string[] = [];
+  let idx = 1;
+
+  for (const [cat, catArticles] of Object.entries(categories)) {
+    const top = catArticles.slice(0, 2); // 카테고리당 최대 2건
+    const label = catLabels[cat] || cat;
+
+    for (const a of top) {
+      const summary = a.impact_comment || a.summary || '';
+      const summaryText = summary.length > 150 ? summary.slice(0, 150) + '…' : summary;
+      sections.push(`${idx}. [${label}] ${a.title}\n   ${summaryText}`);
+      idx++;
+      if (idx > 8) break;
+    }
+    if (idx > 8) break;
+  }
+
+  return sections.join('\n\n');
 }
 
 function renderArticleTable(articles: Article[]): string {
