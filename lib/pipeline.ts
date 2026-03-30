@@ -20,11 +20,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 // Vercel Hobby: 60s 제한. 각 단계별 시간 예산.
 const TIMEOUT = {
-  RSS: 25000,
-  OTHER_COLLECTORS: 15000,
-  CURATION: 15000,
-  BRIEF: 12000,
-  TRENDS: 12000,
+  RSS: 15000,
+  OTHER_COLLECTORS: 10000,
+  CURATION: 12000,
+  BRIEF: 10000,
+  TRENDS: 10000,
   TOTAL_BUDGET: 50000,
 } as const;
 

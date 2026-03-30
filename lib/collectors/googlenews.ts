@@ -4,7 +4,7 @@ import type { Collector } from './base';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
 
-const parser = new Parser({ timeout: 8000 });
+const parser = new Parser({ timeout: 5000 });
 
 // Google News RSS — 무료, API 키 불필요
 // https://news.google.com/rss/search?q=keyword&hl=ko&gl=KR&ceid=KR:ko
@@ -26,7 +26,7 @@ export const googlenewsCollector: Collector = {
       .select('*')
       .eq('enabled', true)
       .order('priority')
-      .limit(10);
+      .limit(6);
 
     if (!groups || groups.length === 0) return [];
 

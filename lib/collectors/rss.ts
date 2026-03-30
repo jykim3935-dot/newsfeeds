@@ -4,7 +4,21 @@ import type { Collector } from './base';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
 
-const parser = new Parser({ timeout: 10000 });
+const parser = new Parser({ timeout: 5000 });
+
+async function fetchFeed(source: Source, batchId: string): Promise<CollectedArticle[]> {
+  const feed = await parser.parseURL(source.url);
+  return (feed.items || []).slice(0, 5).filter((item) => item.title && item.link).map((item) => ({
+    title: item.title!,
+    url: item.link!,
+    source: source.name,
+    content_type: source.content_type,
+    published_at: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : null,
+    summary: item.contentSnippet?.slice(0, 500) || null,
+    matched_keywords: [],
+    batch_id: batchId,
+  }));
+}
 
 export const rssCollector: Collector = {
   name: 'rss',
@@ -18,33 +32,28 @@ export const rssCollector: Collector = {
 
     if (!sources || sources.length === 0) return [];
 
-    const results: CollectedArticle[] = [];
-
-    for (const source of sources as Source[]) {
-      try {
-        const feed = await parser.parseURL(source.url);
-        const items = (feed.items || []).slice(0, 10);
-
-        for (const item of items) {
-          if (!item.title || !item.link) continue;
-          results.push({
-            title: item.title,
-            url: item.link,
-            source: source.name,
-            content_type: source.content_type,
-            published_at: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : null,
-            summary: item.contentSnippet?.slice(0, 500) || null,
-            matched_keywords: [],
-            batch_id: batchId,
-          });
+    // 전체 병렬 실행 + 개별 5초 타임아웃
+    const results = await Promise.allSettled(
+      (sources as Source[]).map(async (source) => {
+        try {
+          const articles = await fetchFeed(source, batchId);
+          return articles;
+        } catch {
+          return [] as CollectedArticle[];
         }
+      })
+    );
 
-        logger.info('rss', `Collected ${items.length} items from ${source.name}`);
-      } catch (err) {
-        logger.error('rss', `Failed to collect from ${source.name}: ${err instanceof Error ? err.message : String(err)}`);
+    const all: CollectedArticle[] = [];
+    let ok = 0;
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value.length > 0) {
+        all.push(...r.value);
+        ok++;
       }
     }
 
-    return results;
+    logger.info('rss', `${ok}/${sources.length} feeds, ${all.length} articles`);
+    return all;
   },
 };
