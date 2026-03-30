@@ -14,8 +14,8 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail(opts: SendEmailOptions): Promise<{ success: boolean; error?: string }> {
-  const senderEmail = process.env.SENDER_EMAIL;
-  const from = senderEmail && senderEmail !== 'onboarding@resend.dev' ? senderEmail : 'onboarding@resend.dev';
+  // TODO: acryl.ai 도메인 인증 완료 후 'intel@acryl.ai'로 변경
+  const from = 'onboarding@resend.dev';
   try {
     await getResend().emails.send({
       from: `ACRYL Intel <${from}>`,

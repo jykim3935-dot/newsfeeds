@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const senderEmail = process.env.SENDER_EMAIL;
-  const from = senderEmail && senderEmail !== 'onboarding@resend.dev' ? senderEmail : 'onboarding@resend.dev';
+  // TODO: acryl.ai 도메인 인증 완료 후 'intel@acryl.ai'로 변경
+  const from = 'onboarding@resend.dev';
 
   if (!apiKey) {
     return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
