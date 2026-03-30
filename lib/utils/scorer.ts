@@ -18,7 +18,7 @@ const SCORING_RULES: Array<{
 }> = [
   // === 즉시 대응 (9-10점, red) ===
   // ACRYL 직접 언급
-  { keywords: ['ACRYL', '아크릴', 'JONATHAN', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA'], score: 10, urgency: 'red', category: 'competitive', label: 'ACRYL 직접 언급 — IR/PR 대응 필요' },
+  { keywords: ['ACRYL', '아크릴', 'JONATHAN 플랫폼', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA 피부'], score: 10, urgency: 'red', category: 'competitive', label: 'ACRYL 직접 언급 — IR/PR 대응 필요' },
   // 경쟁사 수주/제품/투자
   { keywords: ['제논', 'GenOn', '마인즈앤컴퍼니'], score: 9, urgency: 'red', category: 'competitive', label: '직접 경쟁사 동향 — 영업/전략 대응 필요' },
   { keywords: ['Run:ai', 'Run.ai'], score: 9, urgency: 'red', category: 'competitive', label: 'GPU 오케스트레이션 글로벌 경쟁사' },
@@ -53,12 +53,16 @@ const IRRELEVANT_PATTERNS = [
   '학회 개최', '세미나 안내', '컨퍼런스 참가', '워크숍 개최',
 ];
 
+// 대소문자 구분이 필요한 키워드 (영문 제품명 등)
+const CASE_SENSITIVE_KEYWORDS = ['ACRYL', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'JONATHAN 플랫폼'];
+
 export function scoreArticle(article: CollectedArticle): ScoringResult {
-  const text = `${article.title} ${article.summary || ''}`.toLowerCase();
+  const rawText = `${article.title} ${article.summary || ''}`;
+  const lowerText = rawText.toLowerCase();
 
   // 무관 기사 필터링
   for (const pattern of IRRELEVANT_PATTERNS) {
-    if (text.includes(pattern.toLowerCase())) {
+    if (lowerText.includes(pattern.toLowerCase())) {
       return { relevance_score: 2, urgency: 'green', category: 'tech', impact_comment: '사업 무관' };
     }
   }
@@ -72,7 +76,11 @@ export function scoreArticle(article: CollectedArticle): ScoringResult {
   for (const rule of SCORING_RULES) {
     let matched = false;
     for (const keyword of rule.keywords) {
-      if (text.includes(keyword.toLowerCase())) {
+      // 대소문자 구분 키워드는 원본 텍스트에서 매칭
+      const isCaseSensitive = CASE_SENSITIVE_KEYWORDS.includes(keyword);
+      const haystack = isCaseSensitive ? rawText : lowerText;
+      const needle = isCaseSensitive ? keyword : keyword.toLowerCase();
+      if (haystack.includes(needle)) {
         matched = true;
         if (rule.score > bestScore) {
           bestScore = rule.score;
