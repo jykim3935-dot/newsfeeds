@@ -10,6 +10,7 @@ export async function GET() {
   checks.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'set' : 'MISSING';
   checks.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ? 'set' : 'MISSING';
   checks.RESEND_API_KEY = process.env.RESEND_API_KEY ? 'set' : 'not set (optional)';
+  checks.SENDER_EMAIL = process.env.SENDER_EMAIL ? process.env.SENDER_EMAIL : 'not set (optional)';
 
   // 2. Check Supabase connection + tables
   if (checks.SUPABASE_URL === 'set' && checks.SUPABASE_SERVICE_ROLE_KEY === 'set') {
@@ -19,7 +20,8 @@ export async function GET() {
 
       const tables = ['pipeline_runs', 'articles', 'sources', 'keyword_groups', 'recipients', 'trends', 'seen_urls'];
       for (const table of tables) {
-        const { error } = await supabase.from(table).select('id').limit(1);
+        const col = table === 'seen_urls' ? 'url_hash' : 'id';
+        const { error } = await supabase.from(table).select(col).limit(1);
         checks[`table:${table}`] = error ? `ERROR: ${error.message}` : 'OK';
       }
     } catch (err) {
