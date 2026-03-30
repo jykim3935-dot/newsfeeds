@@ -10,6 +10,13 @@ import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
 import type { PipelineResult, PipelineMetrics, CollectedArticle, Article, Trend } from '@/lib/types';
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
   const start = Date.now();
   const supabase = getSupabaseAdmin();
@@ -125,7 +132,11 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     logger.info('pipeline', 'Step 5: Trend Detection');
     let trends: Trend[] = [];
     try {
-      const trendResult = await detectTrends(finalArticles, batchId);
+      const trendResult = await withTimeout(
+        detectTrends(finalArticles, batchId),
+        15000,
+        { trends: [], tokensIn: 0, tokensOut: 0, warning: 'Trend detection timed out' }
+      );
       trends = trendResult.trends;
       metrics.tokens.input_total += trendResult.tokensIn;
       metrics.tokens.output_total += trendResult.tokensOut;
@@ -139,7 +150,11 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     logger.info('pipeline', 'Step 6: Executive Brief');
     let brief = '';
     try {
-      const briefResult = await generateBrief(finalArticles);
+      const briefResult = await withTimeout(
+        generateBrief(finalArticles),
+        15000,
+        { brief: '브리프 생성 시간 초과 — 다음 실행에서 생성됩니다.', tokensIn: 0, tokensOut: 0, warning: 'Brief generation timed out' }
+      );
       brief = briefResult.brief;
       metrics.tokens.input_total += briefResult.tokensIn;
       metrics.tokens.output_total += briefResult.tokensOut;

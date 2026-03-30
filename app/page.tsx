@@ -22,12 +22,55 @@ interface ArticleSummary {
   category: string | null;
 }
 
+interface SourceItem {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  content_type: string;
+  category: string;
+  enabled: boolean;
+}
+
+interface KeywordItem {
+  id: string;
+  group_name: string;
+  category: string;
+  content_types: string[];
+  priority: number;
+  keywords: string[];
+  enabled: boolean;
+}
+
+type TabType = 'overview' | 'articles' | 'pipeline' | 'sources' | 'keywords';
+
+const TAB_LABELS: Record<TabType, string> = {
+  overview: '개요',
+  articles: '기사',
+  pipeline: '파이프라인',
+  sources: '소스 관리',
+  keywords: '키워드 관리',
+};
+
+const CONTENT_TYPE_OPTIONS = ['AI/기술', '산업/시장', '정책/규제', '경영/전략', '글로벌'];
+const CATEGORY_OPTIONS = ['tech', 'industry', 'policy', 'management', 'global'];
+
 export default function Dashboard() {
   const [runs, setRuns] = useState<PipelineRun[]>([]);
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'articles' | 'pipeline'>('overview');
+  const [tab, setTab] = useState<TabType>('overview');
+
+  // Sources state
+  const [sources, setSources] = useState<SourceItem[]>([]);
+  const [sourcesLoading, setSourcesLoading] = useState(false);
+  const [newSource, setNewSource] = useState({ name: '', url: '', type: 'rss', content_type: 'AI/기술', category: 'tech' });
+
+  // Keywords state
+  const [keywords, setKeywords] = useState<KeywordItem[]>([]);
+  const [keywordsLoading, setKeywordsLoading] = useState(false);
+  const [newKeyword, setNewKeyword] = useState({ group_name: '', category: 'tech', priority: 2, keywords: '' });
 
   const fetchData = useCallback(async () => {
     try {
@@ -50,7 +93,40 @@ export default function Dashboard() {
     }
   }, []);
 
+  const fetchSources = useCallback(async () => {
+    setSourcesLoading(true);
+    try {
+      const res = await fetch('/api/sources');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setSources(data);
+      }
+    } catch {
+      // ignore
+    }
+    setSourcesLoading(false);
+  }, []);
+
+  const fetchKeywords = useCallback(async () => {
+    setKeywordsLoading(true);
+    try {
+      const res = await fetch('/api/keywords');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setKeywords(data);
+      }
+    } catch {
+      // ignore
+    }
+    setKeywordsLoading(false);
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    if (tab === 'sources') fetchSources();
+    if (tab === 'keywords') fetchKeywords();
+  }, [tab, fetchSources, fetchKeywords]);
 
   const triggerPipeline = async () => {
     setLoading(true);
@@ -73,6 +149,113 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  // Source handlers
+  const toggleSource = async (source: SourceItem) => {
+    try {
+      const res = await fetch(`/api/sources/${source.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !source.enabled }),
+      });
+      if (res.ok) {
+        setSources((prev) => prev.map((s) => s.id === source.id ? { ...s, enabled: !s.enabled } : s));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const deleteSource = async (id: string) => {
+    if (!confirm('이 소스를 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`/api/sources/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSources((prev) => prev.filter((s) => s.id !== id));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const addSource = async () => {
+    if (!newSource.name || !newSource.url) return;
+    try {
+      const res = await fetch('/api/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newSource, enabled: true }),
+      });
+      if (res.ok) {
+        setNewSource({ name: '', url: '', type: 'rss', content_type: 'AI/기술', category: 'tech' });
+        await fetchSources();
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  // Keyword handlers
+  const toggleKeyword = async (kw: KeywordItem) => {
+    try {
+      const res = await fetch(`/api/keywords/${kw.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !kw.enabled }),
+      });
+      if (res.ok) {
+        setKeywords((prev) => prev.map((k) => k.id === kw.id ? { ...k, enabled: !k.enabled } : k));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const deleteKeyword = async (id: string) => {
+    if (!confirm('이 키워드 그룹을 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`/api/keywords/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setKeywords((prev) => prev.filter((k) => k.id !== id));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const addKeyword = async () => {
+    if (!newKeyword.group_name || !newKeyword.keywords) return;
+    try {
+      const keywordsArray = newKeyword.keywords.split(',').map((k) => k.trim()).filter(Boolean);
+      const res = await fetch('/api/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          group_name: newKeyword.group_name,
+          category: newKeyword.category,
+          priority: newKeyword.priority,
+          keywords: keywordsArray,
+          enabled: true,
+        }),
+      });
+      if (res.ok) {
+        setNewKeyword({ group_name: '', category: 'tech', priority: 2, keywords: '' });
+        await fetchKeywords();
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: 13, border: '1px solid #d1d5db', borderRadius: 4,
+    outline: 'none', fontFamily: 'inherit',
+  };
+
+  const smallBtnStyle = (color: string, bg: string): React.CSSProperties => ({
+    padding: '4px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+    background: bg, color, border: 'none', borderRadius: 4,
+  });
+
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: '32px 16px', fontFamily: '-apple-system, Arial, sans-serif' }}>
       <header style={{ marginBottom: 32 }}>
@@ -81,7 +264,7 @@ export default function Dashboard() {
       </header>
 
       <nav style={{ display: 'flex', gap: 16, marginBottom: 24, borderBottom: '1px solid #e5e7eb', paddingBottom: 8 }}>
-        {(['overview', 'articles', 'pipeline'] as const).map((t) => (
+        {(['overview', 'articles', 'pipeline', 'sources', 'keywords'] as TabType[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             style={{
               padding: '4px 12px', fontSize: 14, fontWeight: 500, cursor: 'pointer',
@@ -89,7 +272,7 @@ export default function Dashboard() {
               color: tab === t ? '#1d4ed8' : '#6b7280',
               border: 'none', borderBottom: tab === t ? '2px solid #1d4ed8' : '2px solid transparent',
             }}>
-            {t === 'overview' ? '개요' : t === 'articles' ? '기사' : '파이프라인'}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </nav>
@@ -178,6 +361,155 @@ export default function Dashboard() {
                 <span style={{ fontSize: 12, color: '#6b7280' }}>{new Date(r.started_at).toLocaleString('ko-KR')}</span>
               </div>
               <div style={{ fontSize: 14, color: '#374151', marginTop: 4 }}>{r.articles_count}건 수집</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'sources' && (
+        <div>
+          {/* Add source form */}
+          <div style={{ background: '#fff', padding: 16, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1e3a5f', margin: '0 0 12px' }}>새 소스 추가</h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>이름</label>
+                <input style={{ ...inputStyle, width: 120 }} value={newSource.name} onChange={(e) => setNewSource({ ...newSource, name: e.target.value })} placeholder="소스 이름" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>URL</label>
+                <input style={{ ...inputStyle, width: 200 }} value={newSource.url} onChange={(e) => setNewSource({ ...newSource, url: e.target.value })} placeholder="https://..." />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>타입</label>
+                <select style={{ ...inputStyle }} value={newSource.type} onChange={(e) => setNewSource({ ...newSource, type: e.target.value })}>
+                  <option value="rss">rss</option>
+                  <option value="api">api</option>
+                  <option value="websearch">websearch</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>콘텐츠 유형</label>
+                <select style={{ ...inputStyle }} value={newSource.content_type} onChange={(e) => setNewSource({ ...newSource, content_type: e.target.value })}>
+                  {CONTENT_TYPE_OPTIONS.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>카테고리</label>
+                <select style={{ ...inputStyle }} value={newSource.category} onChange={(e) => setNewSource({ ...newSource, category: e.target.value })}>
+                  {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <button onClick={addSource} style={{ padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4 }}>
+                추가
+              </button>
+            </div>
+          </div>
+
+          {/* Sources list */}
+          {sourcesLoading && <p style={{ fontSize: 14, color: '#6b7280' }}>로딩 중...</p>}
+          {!sourcesLoading && sources.length === 0 && <p style={{ fontSize: 14, color: '#6b7280' }}>등록된 소스가 없습니다.</p>}
+          {sources.map((s) => (
+            <div key={s.id} style={{
+              background: '#fff', padding: 12, borderRadius: 6, marginBottom: 8,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              opacity: s.enabled ? 1 : 0.55,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: '#111' }}>{s.name}</div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.url}</div>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, display: 'flex', gap: 8 }}>
+                  <span style={{ padding: '1px 6px', background: '#f3f4f6', borderRadius: 3 }}>{s.type}</span>
+                  <span style={{ padding: '1px 6px', background: '#f3f4f6', borderRadius: 3 }}>{s.content_type}</span>
+                  <span style={{ padding: '1px 6px', background: '#f3f4f6', borderRadius: 3 }}>{s.category}</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginLeft: 12, flexShrink: 0 }}>
+                <button onClick={() => toggleSource(s)}
+                  style={smallBtnStyle(s.enabled ? '#ca8a04' : '#16a34a', s.enabled ? '#fefce8' : '#f0fdf4')}>
+                  {s.enabled ? '비활성화' : '활성화'}
+                </button>
+                <button onClick={() => deleteSource(s.id)}
+                  style={smallBtnStyle('#dc2626', '#fef2f2')}>
+                  삭제
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'keywords' && (
+        <div>
+          {/* Add keyword form */}
+          <div style={{ background: '#fff', padding: 16, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1e3a5f', margin: '0 0 12px' }}>새 키워드 그룹 추가</h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>그룹명</label>
+                <input style={{ ...inputStyle, width: 140 }} value={newKeyword.group_name} onChange={(e) => setNewKeyword({ ...newKeyword, group_name: e.target.value })} placeholder="그룹 이름" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>카테고리</label>
+                <select style={{ ...inputStyle }} value={newKeyword.category} onChange={(e) => setNewKeyword({ ...newKeyword, category: e.target.value })}>
+                  {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>우선순위</label>
+                <select style={{ ...inputStyle }} value={newKeyword.priority} onChange={(e) => setNewKeyword({ ...newKeyword, priority: Number(e.target.value) })}>
+                  <option value={1}>1 (높음)</option>
+                  <option value={2}>2 (보통)</option>
+                  <option value={3}>3 (낮음)</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: '#6b7280' }}>키워드 (쉼표 구분)</label>
+                <input style={{ ...inputStyle, width: 220 }} value={newKeyword.keywords} onChange={(e) => setNewKeyword({ ...newKeyword, keywords: e.target.value })} placeholder="AI, 생성형AI, LLM" />
+              </div>
+              <button onClick={addKeyword} style={{ padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4 }}>
+                추가
+              </button>
+            </div>
+          </div>
+
+          {/* Keywords list */}
+          {keywordsLoading && <p style={{ fontSize: 14, color: '#6b7280' }}>로딩 중...</p>}
+          {!keywordsLoading && keywords.length === 0 && <p style={{ fontSize: 14, color: '#6b7280' }}>등록된 키워드 그룹이 없습니다.</p>}
+          {keywords.map((kw) => (
+            <div key={kw.id} style={{
+              background: '#fff', padding: 12, borderRadius: 6, marginBottom: 8,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              opacity: kw.enabled ? 1 : 0.55,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: '#111' }}>{kw.group_name}</span>
+                  <span style={{ fontSize: 11, padding: '1px 6px', background: '#eff6ff', color: '#1d4ed8', borderRadius: 3 }}>{kw.category}</span>
+                  <span style={{
+                    fontSize: 11, padding: '1px 6px', borderRadius: 3,
+                    background: kw.priority === 1 ? '#fef2f2' : kw.priority === 2 ? '#fefce8' : '#f3f4f6',
+                    color: kw.priority === 1 ? '#dc2626' : kw.priority === 2 ? '#ca8a04' : '#6b7280',
+                  }}>P{kw.priority}</span>
+                </div>
+                <div style={{ marginTop: 6, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {kw.keywords.map((k, i) => (
+                    <span key={i} style={{ fontSize: 11, padding: '2px 8px', background: '#f3f4f6', color: '#374151', borderRadius: 10 }}>{k}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginLeft: 12, flexShrink: 0 }}>
+                <button onClick={() => toggleKeyword(kw)}
+                  style={smallBtnStyle(kw.enabled ? '#ca8a04' : '#16a34a', kw.enabled ? '#fefce8' : '#f0fdf4')}>
+                  {kw.enabled ? '비활성화' : '활성화'}
+                </button>
+                <button onClick={() => deleteKeyword(kw.id)}
+                  style={smallBtnStyle('#dc2626', '#fef2f2')}>
+                  삭제
+                </button>
+              </div>
             </div>
           ))}
         </div>
