@@ -14,7 +14,7 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail(opts: SendEmailOptions): Promise<{ success: boolean; error?: string }> {
-  const from = process.env.SENDER_EMAIL || 'intel@acryl.ai';
+  const from = 'intel@acryl.ai';
   try {
     await getResend().emails.send({
       from: `ACRYL Intel <${from}>`,

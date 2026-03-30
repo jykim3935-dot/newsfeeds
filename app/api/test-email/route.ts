@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const senderEmail = process.env.SENDER_EMAIL;
+  const from = 'intel@acryl.ai';
 
   if (!apiKey) {
     return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
   }
 
-  const from = senderEmail || 'intel@acryl.ai';
+  // from is hardcoded above
 
   try {
     const resend = new Resend(apiKey);
