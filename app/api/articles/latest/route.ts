@@ -1,25 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
-
-  const { data: latestRun } = await supabase
-    .from('pipeline_runs')
-    .select('batch_id')
-    .eq('status', 'completed')
-    .order('completed_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (!latestRun) return NextResponse.json([]);
+  const limit = Number(req.nextUrl.searchParams.get('limit') || '100');
 
   const { data, error } = await supabase
     .from('articles')
     .select('*')
-    .eq('batch_id', latestRun.batch_id)
-    .order('relevance_score', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(data || []);
 }
