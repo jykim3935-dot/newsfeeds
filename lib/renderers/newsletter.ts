@@ -83,9 +83,13 @@ export function renderNewsletter(data: NewsletterData): string {
 
 function buildAutoBrief(articles: Article[]): string {
   const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
-  const top3 = sorted.slice(0, 3);
-  if (top3.length === 0) return '오늘 수집된 기사가 없습니다.';
-  return top3.map((a, i) => `${i + 1}. ${a.title}${a.impact_comment ? ' — ' + a.impact_comment : ''}`).join('\n');
+  const top5 = sorted.slice(0, 5);
+  if (top5.length === 0) return '오늘 수집된 기사가 없습니다.';
+  const lines = top5.map((a, i) => {
+    const detail = a.impact_comment || a.summary || '';
+    return `${i + 1}. [${a.category || '기타'}] ${a.title}\n   ${detail}`;
+  });
+  return lines.join('\n\n');
 }
 
 function renderArticleTable(articles: Article[]): string {
@@ -94,16 +98,15 @@ function renderArticleTable(articles: Article[]): string {
   const rows = sorted.map((a) => {
     const urgencyColor = a.urgency === 'red' ? '#DC2626' : a.urgency === 'yellow' ? '#D97706' : '#6B7280';
     const urgencyDot = a.urgency === 'red' ? '🔴' : a.urgency === 'yellow' ? '🟡' : '🟢';
-    const summary = a.impact_comment || a.summary || '';
-    const summaryText = summary.length > 80 ? summary.slice(0, 80) + '…' : summary;
+    const summary = [a.impact_comment, a.summary].filter(Boolean).join(' | ');
 
     return `<tr style="border-bottom:1px solid #F3F4F6;">
-      <td style="padding:8px 6px;vertical-align:top;width:28px;font-size:12px;">${urgencyDot}</td>
-      <td style="padding:8px 6px;vertical-align:top;">
+      <td style="padding:10px 6px;vertical-align:top;width:28px;font-size:12px;">${urgencyDot}</td>
+      <td style="padding:10px 6px;vertical-align:top;">
         <a href="${esc(a.url)}" style="color:#1F2937;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;">${esc(a.title)}</a>
-        ${summaryText ? `<div style="font-size:12px;color:#6B7280;margin-top:3px;line-height:1.4;">${esc(summaryText)}</div>` : ''}
+        ${summary ? `<div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.6;">${esc(summary)}</div>` : ''}
       </td>
-      <td style="padding:8px 6px;vertical-align:top;white-space:nowrap;text-align:right;">
+      <td style="padding:10px 6px;vertical-align:top;white-space:nowrap;text-align:right;">
         <div style="font-size:11px;color:${urgencyColor};font-weight:600;">${a.relevance_score || '-'}/10</div>
         <div style="font-size:11px;color:#9CA3AF;">${esc(a.source || '')}</div>
         <div style="font-size:10px;color:#D1D5DB;">${esc(a.category || '')}</div>
@@ -158,8 +161,8 @@ function renderYellowCard(a: Article): string {
     <tr><td style="padding:10px 16px;">
       <a href="${esc(a.url)}" style="font-size:14px;color:#1F2937;text-decoration:none;font-weight:600;">${esc(a.title)}</a>
       <div style="font-size:12px;color:#6B7280;margin-top:2px;">${esc(a.source || '')} · ${esc(a.category || '')} · ${a.relevance_score || '-'}/10</div>
-      ${a.impact_comment ? `<div style="font-size:13px;color:#4B5563;margin-top:4px;line-height:1.4;">${esc(a.impact_comment)}</div>` : ''}
-      ${a.summary ? `<div style="font-size:12px;color:#6B7280;margin-top:3px;">${esc(a.summary.slice(0, 100))}${a.summary.length > 100 ? '…' : ''}</div>` : ''}
+      ${a.impact_comment ? `<div style="font-size:13px;color:#4B5563;margin-top:4px;line-height:1.5;">${esc(a.impact_comment)}</div>` : ''}
+      ${a.summary ? `<div style="font-size:12px;color:#6B7280;margin-top:4px;line-height:1.5;">${esc(a.summary)}</div>` : ''}
     </td></tr>
   </table>`;
 }
