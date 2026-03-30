@@ -1,5 +1,5 @@
 import { collectors } from '@/lib/collectors';
-import { basicCuration, deepCuration } from '@/lib/processors/curator';
+import { basicCuration } from '@/lib/processors/curator';
 import { detectTrends } from '@/lib/processors/trend-detector';
 import { generateBrief } from '@/lib/processors/executive-brief';
 import { renderNewsletter } from '@/lib/renderers/newsletter';
@@ -47,39 +47,58 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
   const metrics: PipelineMetrics = {
     duration_ms: 0,
     collectors: {},
-    curation: {
-      basic: { processed: 0, api_calls: 0 },
-      deep: { processed: 0, api_calls: 0 },
-    },
+    curation: { basic: { processed: 0, api_calls: 0 }, deep: { processed: 0, api_calls: 0 } },
     tokens: { input_total: 0, output_total: 0 },
     estimated_cost_usd: 0,
     sending: { total: 0, sent: 0, failed: 0 },
   };
 
   try {
-    // Step 1: Collection
-    logger.info('pipeline', 'Step 1: Collection started');
+    // Step 1: Collection — RSS first (parallel, 20s timeout each)
+    logger.info('pipeline', 'Step 1: Collection (parallel)');
     let allArticles: CollectedArticle[] = [];
 
-    for (const collector of collectors) {
+    const rssCollector = collectors.find((c) => c.name === 'rss');
+    const otherCollectors = collectors.filter((c) => c.name !== 'rss');
+
+    // RSS is fast — run with 25s timeout
+    if (rssCollector) {
       const cStart = Date.now();
       try {
-        const articles = await collector.collect(batchId);
+        const articles = await withTimeout(rssCollector.collect(batchId), 25000, []);
         allArticles.push(...articles);
-        metrics.collectors[collector.name] = {
-          count: articles.length,
-          duration_ms: Date.now() - cStart,
-          errors: [],
-        };
+        metrics.collectors.rss = { count: articles.length, duration_ms: Date.now() - cStart, errors: [] };
+        logger.info('pipeline', `RSS: ${articles.length} articles`);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        metrics.collectors[collector.name] = {
-          count: 0,
-          duration_ms: Date.now() - cStart,
-          errors: [msg],
-        };
-        warnings.push(`Collector ${collector.name} failed: ${msg}`);
+        metrics.collectors.rss = { count: 0, duration_ms: Date.now() - cStart, errors: [msg] };
+        warnings.push(`RSS failed: ${msg}`);
       }
+    }
+
+    // Other collectors (websearch, gov, research, dart) — parallel, 15s timeout
+    const remaining = 50000 - (Date.now() - start); // Leave time for curation
+    if (remaining > 15000) {
+      const results = await Promise.allSettled(
+        otherCollectors.map(async (collector) => {
+          const cStart = Date.now();
+          try {
+            const articles = await withTimeout(collector.collect(batchId), 15000, []);
+            metrics.collectors[collector.name] = { count: articles.length, duration_ms: Date.now() - cStart, errors: [] };
+            return articles;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            metrics.collectors[collector.name] = { count: 0, duration_ms: Date.now() - cStart, errors: [msg] };
+            warnings.push(`${collector.name} failed: ${msg}`);
+            return [] as CollectedArticle[];
+          }
+        })
+      );
+      for (const r of results) {
+        if (r.status === 'fulfilled') allArticles.push(...r.value);
+      }
+    } else {
+      warnings.push('Skipped non-RSS collectors (time budget exceeded)');
     }
 
     // Step 2: Dedup
@@ -90,170 +109,118 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
       warnings.push(`Dedup failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Step 3: Basic Curation
+    // Step 3: Basic Curation (15s timeout)
     logger.info('pipeline', `Step 3: Basic Curation (${allArticles.length} articles)`);
     let curatedArticles: Article[] = [];
     try {
-      const curationResult = await basicCuration(allArticles, batchId);
+      const curationResult = await withTimeout(
+        basicCuration(allArticles, batchId),
+        15000,
+        { articles: [], apiCalls: 0, tokensIn: 0, tokensOut: 0, warnings: ['Curation timed out'] }
+      );
       curatedArticles = curationResult.articles;
       metrics.curation.basic = { processed: curatedArticles.length, api_calls: curationResult.apiCalls };
       metrics.tokens.input_total += curationResult.tokensIn;
       metrics.tokens.output_total += curationResult.tokensOut;
       warnings.push(...curationResult.warnings);
     } catch (err) {
-      errors.push(`Basic curation failed: ${err instanceof Error ? err.message : String(err)}`);
-      curatedArticles = [];
+      warnings.push(`Curation failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Step 4: Deep Curation
-    logger.info('pipeline', 'Step 4: Deep Curation');
-    let deepCount = 0;
-    try {
-      const deepResult = await deepCuration(curatedArticles);
-      deepCount = deepResult.deepCount;
-      metrics.curation.deep = { processed: deepCount, api_calls: deepResult.apiCalls };
-      metrics.tokens.input_total += deepResult.tokensIn;
-      metrics.tokens.output_total += deepResult.tokensOut;
-      warnings.push(...deepResult.warnings);
-    } catch (err) {
-      warnings.push(`Deep curation failed: ${err instanceof Error ? err.message : String(err)}`);
+    // If curation timed out, save articles without curation scores
+    if (curatedArticles.length === 0 && allArticles.length > 0) {
+      logger.info('pipeline', 'Saving articles without curation');
+      for (const article of allArticles) {
+        const { data } = await supabase.from('articles').insert({
+          title: article.title, url: article.url, source: article.source,
+          content_type: article.content_type, published_at: article.published_at,
+          summary: article.summary, matched_keywords: article.matched_keywords,
+          batch_id: batchId, relevance_score: 5, urgency: 'green',
+          key_findings: [], action_items: [],
+        }).select().single();
+        if (data) curatedArticles.push(data as Article);
+      }
     }
 
-    // Reload articles with deep curation data
+    // Reload from DB
     const { data: freshArticles } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('batch_id', batchId)
+      .from('articles').select('*').eq('batch_id', batchId)
       .order('relevance_score', { ascending: false });
+    const finalArticles = (freshArticles || curatedArticles) as Article[];
 
-    const finalArticles = freshArticles || curatedArticles;
-
-    // Step 5: Trend Detection
-    logger.info('pipeline', 'Step 5: Trend Detection');
-    let trends: Trend[] = [];
-    try {
-      const trendResult = await withTimeout(
-        detectTrends(finalArticles, batchId),
-        15000,
-        { trends: [], tokensIn: 0, tokensOut: 0, warning: 'Trend detection timed out' }
-      );
-      trends = trendResult.trends;
-      metrics.tokens.input_total += trendResult.tokensIn;
-      metrics.tokens.output_total += trendResult.tokensOut;
-      if (trendResult.warning) warnings.push(trendResult.warning);
-    } catch (err) {
-      trends = [];
-      warnings.push(`Trend detection failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-
-    // Step 6: Executive Brief
-    logger.info('pipeline', 'Step 6: Executive Brief');
-    let brief = '';
-    try {
-      const briefResult = await withTimeout(
+    // Step 4: Brief + Trends (parallel, 12s timeout each)
+    logger.info('pipeline', 'Step 4: Brief + Trends (parallel)');
+    const [briefResult, trendResult] = await Promise.all([
+      withTimeout(
         generateBrief(finalArticles),
-        15000,
-        { brief: '브리프 생성 시간 초과 — 다음 실행에서 생성됩니다.', tokensIn: 0, tokensOut: 0, warning: 'Brief generation timed out' }
-      );
-      brief = briefResult.brief;
-      metrics.tokens.input_total += briefResult.tokensIn;
-      metrics.tokens.output_total += briefResult.tokensOut;
-      if (briefResult.warning) warnings.push(briefResult.warning);
-    } catch (err) {
-      brief = '브리프 생성 실패';
-      warnings.push(`Brief failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
+        12000,
+        { brief: '브리프 생성 시간 초과', tokensIn: 0, tokensOut: 0, warning: 'Brief timed out' }
+      ),
+      withTimeout(
+        detectTrends(finalArticles, batchId),
+        12000,
+        { trends: [] as Trend[], tokensIn: 0, tokensOut: 0, warning: 'Trends timed out' }
+      ),
+    ]);
 
-    // Step 7: Render & Send
-    logger.info('pipeline', 'Step 7: Render & Send');
+    const brief = briefResult.brief;
+    const trends = trendResult.trends;
+    metrics.tokens.input_total += briefResult.tokensIn + trendResult.tokensIn;
+    metrics.tokens.output_total += briefResult.tokensOut + trendResult.tokensOut;
+    if (briefResult.warning) warnings.push(briefResult.warning);
+    if (trendResult.warning) warnings.push(trendResult.warning);
+
+    // Step 5: Render & Send
+    logger.info('pipeline', 'Step 5: Render & Send');
     const date = new Date().toLocaleDateString('ko-KR', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
     });
-
     const { subject, preheader } = generateSubjectLine(finalArticles, date);
-
     const html = renderNewsletter({
-      articles: finalArticles,
-      date,
-      executiveBrief: brief,
-      trends: trends || [],
-      subjectLine: subject,
-      preheaderText: preheader,
+      articles: finalArticles, date, executiveBrief: brief,
+      trends: trends || [], subjectLine: subject, preheaderText: preheader,
     });
 
-    // Get recipients
     let recipients: string[];
     if (testEmail) {
       recipients = [testEmail];
     } else {
       const { data: recipientData } = await supabase
-        .from('recipients')
-        .select('email')
-        .eq('enabled', true);
+        .from('recipients').select('email').eq('enabled', true);
       recipients = (recipientData || []).map((r) => r.email);
     }
-
     metrics.sending.total = recipients.length;
 
     if (recipients.length > 0) {
       const result = await sendEmail({ to: recipients, subject, html });
-      if (result.success) {
-        metrics.sending.sent = recipients.length;
-      } else {
-        metrics.sending.failed = recipients.length;
-        warnings.push(`Email sending failed: ${result.error}`);
-      }
+      if (result.success) metrics.sending.sent = recipients.length;
+      else { metrics.sending.failed = recipients.length; warnings.push(`Email failed: ${result.error}`); }
     }
 
-    // Calculate cost
-    // Haiku: $0.80/M input, $4/M output; Sonnet: $3/M input, $15/M output
-    // Rough estimate
     metrics.estimated_cost_usd = (metrics.tokens.input_total * 2 + metrics.tokens.output_total * 10) / 1_000_000;
     metrics.duration_ms = Date.now() - start;
 
-    // Update pipeline run
     await supabase.from('pipeline_runs').update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      articles_count: finalArticles.length,
-      executive_brief: brief,
-      trend_summary: (trends || []).map((t) => t.trend_title).join(', '),
-      metrics,
+      status: 'completed', completed_at: new Date().toISOString(),
+      articles_count: finalArticles.length, executive_brief: brief,
+      trend_summary: (trends || []).map((t) => t.trend_title).join(', '), metrics,
     }).eq('id', run.id);
 
-    logger.info('pipeline', `Pipeline completed: ${finalArticles.length} articles, ${deepCount} deep, ${trends?.length || 0} trends`);
-
     return {
-      batchId,
-      articlesCount: finalArticles.length,
-      deepCuratedCount: deepCount,
-      trendsCount: trends?.length || 0,
-      sent: metrics.sending.sent,
-      errors,
-      warnings,
-      status: 'completed',
-      metrics,
+      batchId, articlesCount: finalArticles.length, deepCuratedCount: 0,
+      trendsCount: trends?.length || 0, sent: metrics.sending.sent,
+      errors, warnings, status: 'completed', metrics,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('pipeline', `Pipeline failed: ${msg}`);
-
     await supabase.from('pipeline_runs').update({
-      status: 'failed',
-      completed_at: new Date().toISOString(),
-      error: msg,
-      metrics: { ...metrics, duration_ms: Date.now() - start },
+      status: 'failed', completed_at: new Date().toISOString(),
+      error: msg, metrics: { ...metrics, duration_ms: Date.now() - start },
     }).eq('id', run.id);
-
     return {
-      batchId,
-      articlesCount: 0,
-      deepCuratedCount: 0,
-      trendsCount: 0,
-      sent: 0,
-      errors: [...errors, msg],
-      warnings,
-      status: 'failed',
+      batchId, articlesCount: 0, deepCuratedCount: 0, trendsCount: 0, sent: 0,
+      errors: [...errors, msg], warnings, status: 'failed',
       metrics: { ...metrics, duration_ms: Date.now() - start },
     };
   }
