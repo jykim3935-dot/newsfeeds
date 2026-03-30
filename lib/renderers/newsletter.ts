@@ -3,15 +3,19 @@ import type { Article, Trend, NewsletterData } from '@/lib/types';
 export function renderNewsletter(data: NewsletterData): string {
   const { articles, date, executiveBrief, trends, subjectLine, preheaderText } = data;
 
-  // 4점 이하 제외 (사업 무관)
-  const relevant = articles.filter((a) => (a.relevance_score || 0) >= 5);
+  // ACRYL 자사 기사 분리
+  const acrylArticles = articles.filter((a) => a.impact_comment === 'ACRYL 자사 관련');
+  const external = articles.filter((a) => a.impact_comment !== 'ACRYL 자사 관련');
+
+  // 외부 인텔리전스만 점수 기반 정렬
+  const relevant = external.filter((a) => (a.relevance_score || 0) >= 5);
   const sorted = [...relevant].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
   const redArticles = sorted.filter((a) => a.urgency === 'red');
   const yellowArticles = sorted.filter((a) => a.urgency === 'yellow');
   const highArticles = sorted.filter((a) => (a.relevance_score || 0) >= 7);
   const lowArticles = sorted.filter((a) => (a.relevance_score || 0) >= 5 && (a.relevance_score || 0) < 7);
   const total = relevant.length;
-  const deepCount = articles.filter((a) => a.deep_summary).length;
+  const deepCount = external.filter((a) => a.deep_summary).length;
 
   const briefText = executiveBrief && !executiveBrief.includes('오류') && !executiveBrief.includes('시간 초과')
     ? executiveBrief
@@ -22,6 +26,7 @@ export function renderNewsletter(data: NewsletterData): string {
   const trendSection = trends.length > 0 ? renderTrends(trends) : '';
   const mainArticles = renderArticleTable(highArticles);
   const otherArticles = lowArticles.length > 0 ? renderCompactList(lowArticles) : '';
+  const acrylSection = acrylArticles.length > 0 ? renderAcrylSection(acrylArticles) : '';
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -75,9 +80,11 @@ export function renderNewsletter(data: NewsletterData): string {
 
         ${otherArticles ? `<!-- OTHER ARTICLES -->
         <tr><td style="background:#F9FAFB;padding:10px 16px;border-top:1px solid #E5E7EB;">
-          <h2 style="margin:0 0 8px;font-size:13px;color:#9CA3AF;">📰 기타 기사 (${lowArticles.length}건)</h2>
+          <h2 style="margin:0 0 8px;font-size:13px;color:#9CA3AF;">📰 기타 참고 (${lowArticles.length}건)</h2>
           ${otherArticles}
         </td></tr>` : ''}
+
+        ${acrylSection}
 
         <!-- FOOTER -->
         <tr><td style="padding:14px 16px;text-align:center;">
@@ -159,6 +166,22 @@ function renderRedCard(a: Article): string {
       ${actionCard}
     </td></tr>
   </table>`;
+}
+
+function renderAcrylSection(articles: Article[]): string {
+  if (articles.length === 0) return '';
+  const items = articles.map((a) =>
+    `<div style="padding:6px 0;border-bottom:1px solid #F3F4F6;">
+      <a href="${esc(a.url)}" style="color:#1E40AF;text-decoration:none;font-size:13px;font-weight:500;">${esc(a.title)}</a>
+      <div style="font-size:11px;color:#6B7280;margin-top:2px;">${esc(a.source || '')} · ${esc(a.published_at || '')}</div>
+    </div>`
+  ).join('');
+
+  return `<!-- ACRYL SECTION -->
+        <tr><td style="background:#EFF6FF;padding:14px 16px;border-top:1px solid #BFDBFE;">
+          <h2 style="margin:0 0 8px;font-size:13px;color:#1E40AF;">🏢 ACRYL 자사 관련 (${articles.length}건)</h2>
+          ${items}
+        </td></tr>`;
 }
 
 function renderCompactList(articles: Article[]): string {

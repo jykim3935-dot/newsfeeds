@@ -17,8 +17,8 @@ const SCORING_RULES: Array<{
   label: string;
 }> = [
   // === 즉시 대응 (9-10점, red) ===
-  // ACRYL 직접 언급
-  { keywords: ['ACRYL', '아크릴', 'JONATHAN 플랫폼', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA 피부'], score: 10, urgency: 'red', category: 'competitive', label: 'ACRYL 직접 언급 — IR/PR 대응 필요' },
+  // ACRYL 직접 언급 → 별도 섹션 (점수는 낮게, 태그로 구분)
+  { keywords: ['ACRYL', '아크릴', 'JONATHAN 플랫폼', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA 피부'], score: 4, urgency: 'green', category: 'competitive', label: 'ACRYL 자사 관련' },
   // 경쟁사 수주/제품/투자
   { keywords: ['제논', 'GenOn', '마인즈앤컴퍼니'], score: 9, urgency: 'red', category: 'competitive', label: '직접 경쟁사 동향 — 영업/전략 대응 필요' },
   { keywords: ['Run:ai', 'Run.ai'], score: 9, urgency: 'red', category: 'competitive', label: 'GPU 오케스트레이션 글로벌 경쟁사' },
