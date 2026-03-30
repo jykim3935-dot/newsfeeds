@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = 'intel@acryl.ai';
+  const senderEmail = process.env.SENDER_EMAIL;
+  const from = senderEmail && senderEmail !== 'onboarding@resend.dev' ? senderEmail : 'onboarding@resend.dev';
 
   if (!apiKey) {
     return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
