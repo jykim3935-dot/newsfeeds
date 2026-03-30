@@ -94,6 +94,12 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const results: Record<string, string> = {};
 
+  // Clear old articles, trends, pipeline runs (fresh start)
+  await supabase.from('trends').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('pipeline_runs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  results.cleanup = 'articles, trends, pipeline_runs cleared';
+
   // Clear existing and re-insert sources
   await supabase.from('sources').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   const { data: srcData, error: srcErr } = await supabase.from('sources').insert(SOURCES).select();
