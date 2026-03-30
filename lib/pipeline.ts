@@ -32,16 +32,12 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
   const start = Date.now();
   const supabase = getSupabaseAdmin();
 
-  // Check for running pipeline
-  const { data: running } = await supabase
-    .from('pipeline_runs')
-    .select('id')
+  // Auto-expire stuck pipelines (running > 3 minutes)
+  const expireCutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+  await supabase.from('pipeline_runs')
+    .update({ status: 'failed', completed_at: new Date().toISOString(), error: 'Auto-expired (stuck)' })
     .eq('status', 'running')
-    .limit(1);
-
-  if (running && running.length > 0) {
-    throw new Error('Pipeline already running');
-  }
+    .lt('started_at', expireCutoff);
 
   // Create pipeline run
   const { data: run, error: runError } = await supabase
