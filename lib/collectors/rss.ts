@@ -21,7 +21,7 @@ async function fetchFeed(source: Source, batchId: string): Promise<CollectedArti
     const text = await res.text();
     feed = await parser.parseString(text);
   }
-  return (feed.items || []).slice(0, 5).filter((item) => item.title && item.link).map((item) => ({
+  return (feed.items || []).slice(0, 3).filter((item) => item.title && item.link).map((item) => ({
     title: item.title!,
     url: item.link!,
     source: source.name,
