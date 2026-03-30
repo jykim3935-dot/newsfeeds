@@ -26,12 +26,32 @@ const SOURCES = [
   { name: 'OpenAI Blog', url: 'https://openai.com/blog/rss.xml', type: 'rss', content_type: 'blog', category: 'tech' },
   { name: 'Anthropic News', url: 'https://www.anthropic.com/rss.xml', type: 'rss', content_type: 'blog', category: 'tech' },
   { name: 'Hugging Face Blog', url: 'https://huggingface.co/blog/feed.xml', type: 'rss', content_type: 'blog', category: 'tech' },
-  // 리서치/투자/정부
+  // 글로벌 주요 매체 (종합)
+  { name: 'Reuters Tech', url: 'https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best', type: 'rss', content_type: 'global', category: 'market' },
+  { name: 'Bloomberg Tech', url: 'https://feeds.bloomberg.com/technology/news.rss', type: 'rss', content_type: 'global', category: 'market' },
+  { name: 'WSJ Tech', url: 'https://feeds.a.dj.com/rss/RSSWSJD.xml', type: 'rss', content_type: 'global', category: 'market' },
+  { name: 'Ars Technica AI', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab', type: 'rss', content_type: 'global', category: 'tech' },
+  { name: 'Wired AI', url: 'https://www.wired.com/feed/tag/ai/latest/rss', type: 'rss', content_type: 'global', category: 'tech' },
+  { name: 'The Information', url: 'https://www.theinformation.com/feed', type: 'rss', content_type: 'global', category: 'investment' },
+  // 투자/VC/스타트업
+  { name: 'Crunchbase News', url: 'https://news.crunchbase.com/feed/', type: 'rss', content_type: 'investment', category: 'investment' },
+  { name: 'a16z Blog', url: 'https://a16z.com/feed/', type: 'rss', content_type: 'blog', category: 'investment' },
+  { name: 'Sequoia Blog', url: 'https://www.sequoiacap.com/feed/', type: 'rss', content_type: 'blog', category: 'investment' },
+  { name: 'PitchBook News', url: 'https://pitchbook.com/news/feed', type: 'rss', content_type: 'investment', category: 'investment' },
+  // AI 헬스케어/의료
+  { name: 'Healthcare IT News', url: 'https://www.healthcareitnews.com/feed', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: 'Fierce Healthcare', url: 'https://www.fiercehealthcare.com/rss/xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: 'STAT News AI', url: 'https://www.statnews.com/feed/', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: 'Nature Digital Medicine', url: 'https://www.nature.com/npjdigitalmed.rss', type: 'rss', content_type: 'research', category: 'tech' },
+  // 리서치
   { name: 'arXiv cs.AI', url: 'https://rss.arxiv.org/rss/cs.AI', type: 'rss', content_type: 'research', category: 'tech' },
   { name: 'arXiv cs.DC', url: 'https://rss.arxiv.org/rss/cs.DC', type: 'rss', content_type: 'research', category: 'tech' },
   { name: 'arXiv cs.LG', url: 'https://rss.arxiv.org/rss/cs.LG', type: 'rss', content_type: 'research', category: 'tech' },
+  // 컨설팅/시장조사
   { name: 'Gartner Newsroom', url: 'https://www.gartner.com/en/newsroom/rss', type: 'rss', content_type: 'consulting', category: 'market' },
   { name: 'CB Insights', url: 'https://www.cbinsights.com/rss/content', type: 'rss', content_type: 'investment', category: 'investment' },
+  { name: 'McKinsey Insights', url: 'https://www.mckinsey.com/insights/rss', type: 'rss', content_type: 'consulting', category: 'market' },
+  // 투자/정부
   { name: 'DART', url: 'https://opendart.fss.or.kr', type: 'api', content_type: 'investment', category: 'investment' },
   { name: '과학기술정보통신부', url: 'https://www.msit.go.kr', type: 'websearch', content_type: 'government', category: 'regulation' },
   { name: 'IITP', url: 'https://www.iitp.kr', type: 'websearch', content_type: 'government', category: 'regulation' },
@@ -46,9 +66,10 @@ const KEYWORDS = [
   { group_name: 'NVIDIA 생태계', category: 'tech', content_types: ['news', 'blog', 'global'], priority: 1, keywords: ['NVIDIA', '엔비디아', 'Blackwell', 'H100', 'B200', 'GB200'] },
   { group_name: 'AI 에이전트', category: 'tech', content_types: ['news', 'blog', 'research'], priority: 1, keywords: ['AI agent', 'AI 에이전트', 'MCP protocol', 'function calling', 'agentic AI'] },
   // Priority 2 (중요)
-  { group_name: '의료 AI', category: 'tech', content_types: ['news', 'research', 'government'], priority: 2, keywords: ['의료 AI', 'healthcare AI', 'SaMD', '피부질환 AI', 'SkinEX'] },
-  { group_name: 'AI 정책', category: 'regulation', content_types: ['government', 'news'], priority: 2, keywords: ['AI 정책', 'AI기본법', '국가AI위원회', 'GS인증', '혁신제품'] },
-  { group_name: 'AI 투자', category: 'investment', content_types: ['news', 'investment'], priority: 2, keywords: ['AI 투자', 'AI IPO', 'CoreWeave', 'KOSDAQ AI'] },
+  { group_name: '의료 AI', category: 'tech', content_types: ['news', 'research', 'government'], priority: 2, keywords: ['의료 AI', 'healthcare AI', 'SaMD', '피부질환 AI', 'SkinEX', 'medical AI', 'digital therapeutics', '디지털치료제', 'AI 진단', 'FDA AI', 'AI radiology', '뷰노', 'Lunit', '루닛'] },
+  { group_name: 'AI 정책', category: 'regulation', content_types: ['government', 'news'], priority: 2, keywords: ['AI 정책', 'AI기본법', '국가AI위원회', 'GS인증', '혁신제품', 'AI 윤리', 'AI 규제'] },
+  { group_name: 'AI 투자', category: 'investment', content_types: ['news', 'investment'], priority: 2, keywords: ['AI 투자', 'AI IPO', 'CoreWeave', 'KOSDAQ AI', 'AI 펀드', 'AI M&A', 'AI 밸류에이션', 'GPU as a Service', 'AI infra funding'] },
+  { group_name: 'AI VC/스타트업 딜', category: 'investment', content_types: ['news', 'investment', 'global'], priority: 2, keywords: ['AI funding', 'Series A', 'Series B', 'AI startup', 'AI unicorn', 'AI acquisition', 'a16z AI', 'Sequoia AI'] },
   { group_name: 'LLM/MLOps', category: 'tech', content_types: ['news', 'blog', 'research'], priority: 2, keywords: ['LLM', 'MLOps', 'model serving', 'inference optimization', 'vLLM'] },
   { group_name: 'AI 반도체/칩', category: 'tech', content_types: ['news', 'blog', 'global'], priority: 2, keywords: ['AI 반도체', 'AI chip', 'NPU', 'AI accelerator', '리벨리온', '퓨리오사', 'Groq', 'Cerebras'] },
   { group_name: 'AI 클라우드/인프라 기업', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['래블업', 'Lablup', 'Backend.AI', '노타', 'Nota AI', '마키나락스', 'MakinaRocks', 'CoreWeave', 'Lambda Labs', 'Together AI'] },
