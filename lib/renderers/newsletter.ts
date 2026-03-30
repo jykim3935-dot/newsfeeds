@@ -3,19 +3,23 @@ import type { Article, Trend, NewsletterData } from '@/lib/types';
 export function renderNewsletter(data: NewsletterData): string {
   const { articles, date, executiveBrief, trends, subjectLine, preheaderText } = data;
 
-  const redArticles = articles.filter((a) => a.urgency === 'red').sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
-  const yellowArticles = articles.filter((a) => a.urgency === 'yellow').sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+  const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+  const redArticles = sorted.filter((a) => a.urgency === 'red');
+  const yellowArticles = sorted.filter((a) => a.urgency === 'yellow');
+  const highArticles = sorted.filter((a) => (a.relevance_score || 0) >= 6);
+  const lowArticles = sorted.filter((a) => (a.relevance_score || 0) < 6);
   const total = articles.length;
   const deepCount = articles.filter((a) => a.deep_summary).length;
 
   const briefText = executiveBrief && !executiveBrief.includes('오류') && !executiveBrief.includes('시간 초과')
     ? executiveBrief
-    : buildAutoBrief(articles);
+    : buildAutoBrief(sorted);
 
   const redCards = redArticles.map((a) => renderRedCard(a)).join('');
   const yellowCards = yellowArticles.map((a) => renderYellowCard(a)).join('');
   const trendSection = trends.length > 0 ? renderTrends(trends) : '';
-  const articleTable = renderArticleTable(articles);
+  const mainArticles = renderArticleTable(highArticles);
+  const otherArticles = lowArticles.length > 0 ? renderCompactList(lowArticles) : '';
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -61,11 +65,17 @@ export function renderNewsletter(data: NewsletterData): string {
 
         ${trendSection}
 
-        <!-- FULL TABLE -->
+        <!-- MAIN ARTICLES -->
         <tr><td style="background:#F9FAFB;padding:20px 24px;border-top:1px solid #E5E7EB;">
-          <h2 style="margin:0 0 16px;font-size:15px;color:#374151;">📋 전체 기사 (${total}건)</h2>
-          ${articleTable}
+          <h2 style="margin:0 0 16px;font-size:15px;color:#374151;">📋 주요 기사 (${highArticles.length}건)</h2>
+          ${mainArticles}
         </td></tr>
+
+        ${otherArticles ? `<!-- OTHER ARTICLES -->
+        <tr><td style="background:#F9FAFB;padding:12px 24px;border-top:1px solid #E5E7EB;">
+          <h2 style="margin:0 0 8px;font-size:13px;color:#9CA3AF;">📰 기타 기사 (${lowArticles.length}건)</h2>
+          ${otherArticles}
+        </td></tr>` : ''}
 
         <!-- FOOTER -->
         <tr><td style="padding:20px 24px;text-align:center;">
@@ -147,6 +157,14 @@ function renderRedCard(a: Article): string {
       ${actionCard}
     </td></tr>
   </table>`;
+}
+
+function renderCompactList(articles: Article[]): string {
+  return articles.map((a) =>
+    `<div style="padding:4px 0;font-size:12px;line-height:1.5;color:#6B7280;border-bottom:1px solid #F3F4F6;">
+      <a href="${esc(a.url)}" style="color:#4B5563;text-decoration:none;">${esc(a.title)}</a> — ${esc(a.source || '')}
+    </div>`
+  ).join('');
 }
 
 function renderYellowCard(a: Article): string {

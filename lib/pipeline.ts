@@ -8,6 +8,7 @@ import { dedup } from '@/lib/utils/dedup';
 import { sendEmail } from '@/lib/clients/resend';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
+import { scoreArticle } from '@/lib/utils/scorer';
 import type { PipelineResult, PipelineMetrics, CollectedArticle, Article, Trend } from '@/lib/types';
 
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -127,15 +128,20 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
       warnings.push(`Curation failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // If curation timed out, save articles without curation scores
+    // If curation timed out, use keyword-based auto scoring
     if (curatedArticles.length === 0 && allArticles.length > 0) {
-      logger.info('pipeline', 'Saving articles without curation');
+      logger.info('pipeline', 'Auto-scoring articles (keyword-based)');
       for (const article of allArticles) {
+        const score = scoreArticle(article);
         const { data } = await supabase.from('articles').insert({
           title: article.title, url: article.url, source: article.source,
           content_type: article.content_type, published_at: article.published_at,
           summary: article.summary, matched_keywords: article.matched_keywords,
-          batch_id: batchId, relevance_score: 5, urgency: 'green',
+          batch_id: batchId,
+          relevance_score: score.relevance_score,
+          urgency: score.urgency,
+          category: score.category,
+          impact_comment: score.impact_comment,
           key_findings: [], action_items: [],
         }).select().single();
         if (data) curatedArticles.push(data as Article);
