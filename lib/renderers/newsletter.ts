@@ -3,12 +3,14 @@ import type { Article, Trend, NewsletterData } from '@/lib/types';
 export function renderNewsletter(data: NewsletterData): string {
   const { articles, date, executiveBrief, trends, subjectLine, preheaderText } = data;
 
-  const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+  // 4점 이하 제외 (사업 무관)
+  const relevant = articles.filter((a) => (a.relevance_score || 0) >= 5);
+  const sorted = [...relevant].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
   const redArticles = sorted.filter((a) => a.urgency === 'red');
   const yellowArticles = sorted.filter((a) => a.urgency === 'yellow');
-  const highArticles = sorted.filter((a) => (a.relevance_score || 0) >= 6);
-  const lowArticles = sorted.filter((a) => (a.relevance_score || 0) < 6);
-  const total = articles.length;
+  const highArticles = sorted.filter((a) => (a.relevance_score || 0) >= 7);
+  const lowArticles = sorted.filter((a) => (a.relevance_score || 0) >= 5 && (a.relevance_score || 0) < 7);
+  const total = relevant.length;
   const deepCount = articles.filter((a) => a.deep_summary).length;
 
   const briefText = executiveBrief && !executiveBrief.includes('오류') && !executiveBrief.includes('시간 초과')
@@ -28,37 +30,37 @@ export function renderNewsletter(data: NewsletterData): string {
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>${esc(subjectLine)}</title>
 </head>
-<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,Arial,'맑은 고딕',sans-serif;">
+<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,'Segoe UI',Arial,'맑은 고딕',sans-serif;-webkit-text-size-adjust:100%;">
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F3F4F6;">${esc(preheaderText)}</div>
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;">
-    <tr><td align="center" style="padding:8px;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+    <tr><td align="center" style="padding:4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
         <!-- HEADER -->
-        <tr><td style="background:#1E40AF;padding:20px 24px;">
-          <h1 style="margin:0;color:#FFFFFF;font-size:20px;">ACRYL Intelligence Brief</h1>
+        <tr><td style="background:#1E40AF;padding:16px 16px;">
+          <h1 style="margin:0;color:#FFFFFF;font-size:18px;">ACRYL Intelligence Brief</h1>
           <p style="margin:4px 0 0;color:#BFDBFE;font-size:13px;">${esc(date)}</p>
         </td></tr>
 
         <!-- BLUF -->
-        <tr><td style="background:#EFF6FF;padding:20px 24px;border-left:4px solid #1E40AF;">
-          <h2 style="margin:0 0 12px;font-size:16px;color:#1E3A5F;">🎯 오늘의 핵심</h2>
-          <div style="font-size:14px;line-height:1.8;color:#1F2937;white-space:pre-line;">${esc(briefText)}</div>
+        <tr><td style="background:#EFF6FF;padding:14px 16px;border-left:4px solid #1E40AF;">
+          <h2 style="margin:0 0 8px;font-size:15px;color:#1E3A5F;">🎯 오늘의 핵심</h2>
+          <div style="font-size:14px;line-height:1.7;color:#1F2937;white-space:pre-line;">${esc(briefText)}</div>
         </td></tr>
 
         <!-- STATS -->
-        <tr><td style="background:#FFFFFF;padding:12px 24px;border-bottom:1px solid #E5E7EB;">
+        <tr><td style="background:#FFFFFF;padding:10px 16px;border-bottom:1px solid #E5E7EB;">
           <span style="color:#6B7280;font-size:12px;">📊 ${total}건 · 🔴${redArticles.length} 🟡${yellowArticles.length} 🟢${total - redArticles.length - yellowArticles.length} · 심층 ${deepCount}건</span>
         </td></tr>
 
         ${redArticles.length > 0 ? `<!-- RED -->
-        <tr><td style="background:#FFFFFF;padding:20px 24px;">
+        <tr><td style="background:#FFFFFF;padding:14px 16px;">
           <h2 style="margin:0 0 16px;font-size:16px;color:#DC2626;">🔴 긴급 대응 필요</h2>
           ${redCards}
         </td></tr>` : ''}
 
         ${yellowArticles.length > 0 ? `<!-- YELLOW -->
-        <tr><td style="background:#FFFFFF;padding:20px 24px;border-top:1px solid #E5E7EB;">
+        <tr><td style="background:#FFFFFF;padding:14px 16px;border-top:1px solid #E5E7EB;">
           <h2 style="margin:0 0 16px;font-size:16px;color:#D97706;">🟡 주의 관찰</h2>
           ${yellowCards}
         </td></tr>` : ''}
@@ -66,19 +68,19 @@ export function renderNewsletter(data: NewsletterData): string {
         ${trendSection}
 
         <!-- MAIN ARTICLES -->
-        <tr><td style="background:#F9FAFB;padding:20px 24px;border-top:1px solid #E5E7EB;">
+        <tr><td style="background:#F9FAFB;padding:14px 16px;border-top:1px solid #E5E7EB;">
           <h2 style="margin:0 0 16px;font-size:15px;color:#374151;">📋 주요 기사 (${highArticles.length}건)</h2>
           ${mainArticles}
         </td></tr>
 
         ${otherArticles ? `<!-- OTHER ARTICLES -->
-        <tr><td style="background:#F9FAFB;padding:12px 24px;border-top:1px solid #E5E7EB;">
+        <tr><td style="background:#F9FAFB;padding:10px 16px;border-top:1px solid #E5E7EB;">
           <h2 style="margin:0 0 8px;font-size:13px;color:#9CA3AF;">📰 기타 기사 (${lowArticles.length}건)</h2>
           ${otherArticles}
         </td></tr>` : ''}
 
         <!-- FOOTER -->
-        <tr><td style="padding:20px 24px;text-align:center;">
+        <tr><td style="padding:14px 16px;text-align:center;">
           <p style="font-size:11px;color:#9CA3AF;margin:0;">
             Powered by Claude AI · ACRYL Intelligence Brief v3.0<br>
             본 브리프는 AI 자동 분석 결과이며 투자 조언이 아닙니다.
@@ -186,7 +188,7 @@ function renderTrends(trends: Trend[]): string {
     </div>`
   ).join('');
 
-  return `<tr><td style="background:#FFFFFF;padding:20px 24px;border-top:1px solid #E5E7EB;">
+  return `<tr><td style="background:#FFFFFF;padding:14px 16px;border-top:1px solid #E5E7EB;">
     <h2 style="margin:0 0 16px;font-size:16px;color:#16A34A;">📈 트렌드</h2>
     ${cards}
   </td></tr>`;
