@@ -155,6 +155,30 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const sendTestEmail = async () => {
+    const email = prompt('테스트 발송할 이메일 주소를 입력하세요:');
+    if (!email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/pipeline/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Error ${res.status}`);
+      } else {
+        setError(null);
+        alert(`${email}로 테스트 뉴스레터를 발송했습니다.`);
+      }
+    } catch {
+      setError('테스트 발송 실패');
+    }
+    setLoading(false);
+  };
+
   // Source handlers
   const toggleSource = async (source: SourceItem) => {
     try {
@@ -294,6 +318,10 @@ export default function Dashboard() {
               style={{ padding: '8px 16px', background: '#f3f4f6', color: '#374151', borderRadius: 6, fontSize: 14, textDecoration: 'none' }}>
               뉴스레터 프리뷰
             </a>
+            <button onClick={sendTestEmail} disabled={loading}
+              style={{ padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
+              📧 테스트 발송
+            </button>
           </div>
 
           {error && (
