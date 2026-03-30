@@ -11,8 +11,7 @@ export async function GET() {
 
     // Cleanup old URLs (30-day policy)
     try {
-      const cleaned = await cleanupOldUrls(30);
-      if (cleaned > 0) logger.info('cron', `Cleaned ${cleaned} old URLs`);
+      await cleanupOldUrls();
     } catch (err) {
       logger.warn('cron', `URL cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
     }

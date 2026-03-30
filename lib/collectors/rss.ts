@@ -4,10 +4,23 @@ import type { Collector } from './base';
 import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
 
-const parser = new Parser({ timeout: 5000 });
+const parser = new Parser({
+  timeout: 5000,
+  headers: { 'Accept-Charset': 'utf-8' },
+  customFields: { item: ['encoded'] },
+});
 
 async function fetchFeed(source: Source, batchId: string): Promise<CollectedArticle[]> {
-  const feed = await parser.parseURL(source.url);
+  // 일부 한국 피드는 직접 fetch로 UTF-8 변환 필요
+  let feed;
+  try {
+    feed = await parser.parseURL(source.url);
+  } catch {
+    // EUC-KR 피드 등 인코딩 문제 시 fetch로 재시도
+    const res = await fetch(source.url, { signal: AbortSignal.timeout(5000) });
+    const text = await res.text();
+    feed = await parser.parseString(text);
+  }
   return (feed.items || []).slice(0, 5).filter((item) => item.title && item.link).map((item) => ({
     title: item.title!,
     url: item.link!,

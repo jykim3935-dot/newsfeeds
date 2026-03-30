@@ -1,4 +1,3 @@
-import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { logger } from '@/lib/utils/logger';
 import type { CollectedArticle } from '@/lib/types';
 import { createHash } from 'crypto';
@@ -12,15 +11,34 @@ function normalizeUrl(url: string): string {
   }
 }
 
-function hashUrl(url: string): string {
-  return createHash('sha256').update(normalizeUrl(url)).digest('hex');
-}
-
 function titleHash(title: string): string {
   return createHash('md5').update(title.slice(0, 40).toLowerCase().trim()).digest('hex');
 }
 
-export function deduplicateArticles(articles: CollectedArticle[]): CollectedArticle[] {
+/**
+ * 배치 내 중복만 제거 (URL + 제목 기준).
+ * DB seen_urls는 사용하지 않음 — 매일 같은 RSS를 수집하므로
+ * 크로스배치 디덥은 오히려 기사를 0건으로 만듦.
+ */
+export async function dedup(articles: CollectedArticle[]): Promise<CollectedArticle[]> {
+  const seenUrl = new Set<string>();
+  const seenTitle = new Set<string>();
+
+  const deduped = articles.filter((a) => {
+    const uKey = normalizeUrl(a.url);
+    const tKey = titleHash(a.title);
+    if (seenUrl.has(uKey) || seenTitle.has(tKey)) return false;
+    seenUrl.add(uKey);
+    seenTitle.add(tKey);
+    return true;
+  });
+
+  logger.info('dedup', `${articles.length} → ${deduped.length} (${articles.length - deduped.length} duplicates removed)`);
+  return deduped;
+}
+
+// 하위 호환용 (테스트에서 사용)
+export const deduplicateArticles = (articles: CollectedArticle[]) => {
   const seenUrl = new Set<string>();
   const seenTitle = new Set<string>();
   return articles.filter((a) => {
@@ -31,54 +49,8 @@ export function deduplicateArticles(articles: CollectedArticle[]): CollectedArti
     seenTitle.add(tKey);
     return true;
   });
-}
+};
 
-export async function dedup(articles: CollectedArticle[]): Promise<CollectedArticle[]> {
-  // Local dedup
-  const seenUrl = new Set<string>();
-  const seenTitle = new Set<string>();
-  const localDeduped = articles.filter((a) => {
-    const uKey = normalizeUrl(a.url);
-    const tKey = titleHash(a.title);
-    if (seenUrl.has(uKey) || seenTitle.has(tKey)) return false;
-    seenUrl.add(uKey);
-    seenTitle.add(tKey);
-    return true;
-  });
-
-  // DB dedup against seen_urls
-  try {
-    const supabase = getSupabaseAdmin();
-    const hashes = localDeduped.map((a) => hashUrl(a.url));
-    const { data: existing } = await supabase
-      .from('seen_urls')
-      .select('url_hash')
-      .in('url_hash', hashes);
-
-    const existingSet = new Set((existing || []).map((r) => r.url_hash));
-    const newArticles = localDeduped.filter((a) => !existingSet.has(hashUrl(a.url)));
-
-    if (newArticles.length > 0) {
-      await supabase.from('seen_urls').upsert(
-        newArticles.map((a) => ({ url_hash: hashUrl(a.url), url: a.url })),
-        { onConflict: 'url_hash' }
-      );
-    }
-
-    logger.info('dedup', `${articles.length} → ${newArticles.length} articles after dedup`);
-    return newArticles;
-  } catch {
-    logger.warn('dedup', 'DB dedup failed, using local dedup only');
-    return localDeduped;
-  }
-}
-
-export async function cleanupOldUrls(days = 30): Promise<number> {
-  const supabase = getSupabaseAdmin();
-  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
-  const { count } = await supabase
-    .from('seen_urls')
-    .delete({ count: 'exact' })
-    .lt('first_seen_at', cutoff);
-  return count || 0;
+export async function cleanupOldUrls(): Promise<number> {
+  return 0; // seen_urls 미사용
 }
