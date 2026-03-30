@@ -1,8 +1,6 @@
 {
-    "functions": {
-          "app/api/cron/daily/route.ts": { "maxDuration": 60 },
-          "app/api/pipeline/run/route.ts": { "maxDuration": 60 },
-          "app/api/mcp/[[...slug]]/route.ts": { "maxDuration": 60 }
-    },
-    "crons": [{ "path": "/api/cron/daily", "schedule": "0 14 * * *" }]
+  "functions": {
+    "app/api/pipeline/run/route.ts": { "maxDuration": 60 },
+    "app/api/mcp/[[...slug]]/route.ts": { "maxDuration": 60 }
+  }
 }
