@@ -123,6 +123,12 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
   useEffect(() => {
     if (tab === 'sources') fetchSources();
     if (tab === 'keywords') fetchKeywords();

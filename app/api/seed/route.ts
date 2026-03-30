@@ -93,5 +93,9 @@ export async function GET() {
   const { data: kwData, error: kwErr } = await supabase.from('keyword_groups').insert(KEYWORDS).select();
   results.keywords = kwErr ? `ERROR: ${kwErr.message}` : `${kwData?.length || 0} keyword groups inserted`;
 
+  // Clear seen_urls so next pipeline run collects fresh articles
+  const { count } = await supabase.from('seen_urls').delete({ count: 'exact' }).neq('url_hash', '');
+  results.seen_urls = `Cleared ${count || 0} entries`;
+
   return NextResponse.json(results);
 }
