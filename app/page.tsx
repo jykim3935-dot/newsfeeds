@@ -179,6 +179,34 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const previewUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/newsletter/preview`
+    : '/api/newsletter/preview';
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(previewUrl);
+      alert('링크가 복사되었습니다. 카톡/슬랙에 붙여넣기 하세요.');
+    } catch {
+      prompt('아래 링크를 복사하세요:', previewUrl);
+    }
+  };
+
+  const shareKakao = () => {
+    const text = `📊 ACRYL Intelligence Brief\n오늘의 AI 경영정보 뉴스레터\n\n${previewUrl}`;
+    // 모바일: kakaotalk 앱으로 공유, PC: 카카오톡 공유 URL
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      window.location.href = `kakaotalk://web/share?url=${encodeURIComponent(previewUrl)}&text=${encodeURIComponent(text)}`;
+      // fallback
+      setTimeout(() => {
+        window.open(`https://story.kakao.com/share?url=${encodeURIComponent(previewUrl)}`, '_blank');
+      }, 1000);
+    } else {
+      // PC에서는 링크 복사로 대체
+      copyLink();
+    }
+  };
+
   // Source handlers
   const toggleSource = async (source: SourceItem) => {
     try {
@@ -321,6 +349,14 @@ export default function Dashboard() {
             <button onClick={sendTestEmail} disabled={loading}
               style={{ padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
               📧 테스트 발송
+            </button>
+            <button onClick={copyLink}
+              style={{ padding: '8px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer' }}>
+              🔗 링크 복사
+            </button>
+            <button onClick={shareKakao}
+              style={{ padding: '8px 16px', background: '#FEE500', color: '#3C1E1E', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer', fontWeight: 600 }}>
+              💬 카톡 공유
             </button>
           </div>
 
