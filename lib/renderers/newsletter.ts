@@ -27,8 +27,8 @@ export function renderNewsletter(data: NewsletterData): string {
 <body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,Arial,'맑은 고딕',sans-serif;">
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F3F4F6;">${esc(preheaderText)}</div>
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;">
-    <tr><td align="center" style="padding:16px;">
-      <table width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;">
+    <tr><td align="center" style="padding:8px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
         <!-- HEADER -->
         <tr><td style="background:#1E40AF;padding:20px 24px;">
@@ -39,7 +39,7 @@ export function renderNewsletter(data: NewsletterData): string {
         <!-- BLUF -->
         <tr><td style="background:#EFF6FF;padding:20px 24px;border-left:4px solid #1E40AF;">
           <h2 style="margin:0 0 12px;font-size:16px;color:#1E3A5F;">🎯 오늘의 핵심</h2>
-          <div style="font-size:14px;line-height:1.8;color:#1F2937;">${esc(briefText)}</div>
+          <div style="font-size:14px;line-height:1.8;color:#1F2937;white-space:pre-line;">${esc(briefText)}</div>
         </td></tr>
 
         <!-- STATS -->
@@ -95,33 +95,26 @@ function buildAutoBrief(articles: Article[]): string {
 function renderArticleTable(articles: Article[]): string {
   const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
 
-  const rows = sorted.map((a) => {
-    const urgencyColor = a.urgency === 'red' ? '#DC2626' : a.urgency === 'yellow' ? '#D97706' : '#6B7280';
+  const cards = sorted.map((a) => {
     const urgencyDot = a.urgency === 'red' ? '🔴' : a.urgency === 'yellow' ? '🟡' : '🟢';
-    const summary = [a.impact_comment, a.summary].filter(Boolean).join(' | ');
+    const urgencyColor = a.urgency === 'red' ? '#DC2626' : a.urgency === 'yellow' ? '#D97706' : '#16A34A';
+    const summary = [a.impact_comment, a.summary].filter(Boolean).join(' ');
 
-    return `<tr style="border-bottom:1px solid #F3F4F6;">
-      <td style="padding:10px 6px;vertical-align:top;width:28px;font-size:12px;">${urgencyDot}</td>
-      <td style="padding:10px 6px;vertical-align:top;">
-        <a href="${esc(a.url)}" style="color:#1F2937;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;">${esc(a.title)}</a>
-        ${summary ? `<div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.6;">${esc(summary)}</div>` : ''}
-      </td>
-      <td style="padding:10px 6px;vertical-align:top;white-space:nowrap;text-align:right;">
-        <div style="font-size:11px;color:${urgencyColor};font-weight:600;">${a.relevance_score || '-'}/10</div>
-        <div style="font-size:11px;color:#9CA3AF;">${esc(a.source || '')}</div>
-        <div style="font-size:10px;color:#D1D5DB;">${esc(a.category || '')}</div>
-      </td>
-    </tr>`;
+    return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;background:#FFFFFF;border-radius:6px;border:1px solid #F3F4F6;">
+      <tr><td style="padding:12px 14px;">
+        <div style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.4;">
+          ${urgencyDot} <a href="${esc(a.url)}" style="color:#1F2937;text-decoration:none;">${esc(a.title)}</a>
+        </div>
+        <div style="margin-top:4px;font-size:12px;color:#6B7280;">
+          <span style="color:${urgencyColor};font-weight:600;">${a.relevance_score || '-'}/10</span>
+          · ${esc(a.source || '')} · ${esc(a.category || '')}
+        </div>
+        ${summary ? `<div style="margin-top:6px;font-size:13px;color:#4B5563;line-height:1.6;">${esc(summary)}</div>` : ''}
+      </td></tr>
+    </table>`;
   }).join('');
 
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:6px;">
-    <tr style="background:#F9FAFB;border-bottom:2px solid #E5E7EB;">
-      <td style="padding:8px 6px;font-size:11px;font-weight:600;color:#6B7280;"></td>
-      <td style="padding:8px 6px;font-size:11px;font-weight:600;color:#6B7280;">기사</td>
-      <td style="padding:8px 6px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;">점수/출처</td>
-    </tr>
-    ${rows}
-  </table>`;
+  return cards;
 }
 
 function renderRedCard(a: Article): string {
