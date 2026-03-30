@@ -35,10 +35,16 @@ export default function Dashboard() {
         fetch('/api/pipeline/logs?limit=5'),
         fetch('/api/articles/latest'),
       ]);
-      setRuns(await runsRes.json());
-      setArticles(await articlesRes.json());
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
+      if (runsRes.ok) {
+        const data = await runsRes.json();
+        if (Array.isArray(data)) setRuns(data);
+      }
+      if (articlesRes.ok) {
+        const data = await articlesRes.json();
+        if (Array.isArray(data)) setArticles(data);
+      }
+    } catch {
+      // API not available yet - ignore
     }
   }, []);
 
@@ -49,8 +55,8 @@ export default function Dashboard() {
     try {
       await fetch('/api/pipeline/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       await fetchData();
-    } catch (err) {
-      console.error('Pipeline trigger failed:', err);
+    } catch {
+      // Pipeline trigger failed - ignore
     }
     setLoading(false);
   };
