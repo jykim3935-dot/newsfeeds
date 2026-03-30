@@ -16,8 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
   }
 
-  // Use onboarding@resend.dev if no verified domain
-  const from = senderEmail || 'onboarding@resend.dev';
+  const from = senderEmail || 'intel@acryl.ai';
 
   try {
     const resend = new Resend(apiKey);
