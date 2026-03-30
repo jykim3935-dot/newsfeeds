@@ -40,7 +40,7 @@ const SOURCES = [
 const KEYWORDS = [
   // Priority 1 (핵심)
   { group_name: 'ACRYL 제품', category: 'competitive', content_types: ['news', 'blog', 'report'], priority: 1, keywords: ['ACRYL', '아크릴', 'JONATHAN', 'GPUBASE', 'AGENTBASE', 'FLIGHTBASE', 'NADIA'] },
-  { group_name: '직접 경쟁사', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['제논', 'GenOn', '마인즈앤컴퍼니', 'VESSL AI', 'Run:ai'] },
+  { group_name: '직접 경쟁사', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['제논', 'GenOn', '마인즈앤컴퍼니', 'VESSL AI', 'Run:ai', '래블업', 'Lablup', '노타', 'Nota AI', '마키나락스', 'MakinaRocks', '모레', 'Moreh', '리벨리온', 'Rebellions', '퓨리오사AI', 'FuriosaAI', '넘버스', 'Numbers'] },
   { group_name: '핵심 파트너', category: 'customer', content_types: ['news', 'investment'], priority: 1, keywords: ['KT AI', '삼성SDS', '메가존클라우드'] },
   { group_name: 'GPU 인프라', category: 'tech', content_types: ['news', 'blog', 'research'], priority: 1, keywords: ['GPU 클라우드', 'GPU 오케스트레이션', 'GPU cluster', 'GPUaaS'] },
   { group_name: 'NVIDIA 생태계', category: 'tech', content_types: ['news', 'blog', 'global'], priority: 1, keywords: ['NVIDIA', '엔비디아', 'Blackwell', 'H100', 'B200', 'GB200'] },
@@ -50,9 +50,12 @@ const KEYWORDS = [
   { group_name: 'AI 정책', category: 'regulation', content_types: ['government', 'news'], priority: 2, keywords: ['AI 정책', 'AI기본법', '국가AI위원회', 'GS인증', '혁신제품'] },
   { group_name: 'AI 투자', category: 'investment', content_types: ['news', 'investment'], priority: 2, keywords: ['AI 투자', 'AI IPO', 'CoreWeave', 'KOSDAQ AI'] },
   { group_name: 'LLM/MLOps', category: 'tech', content_types: ['news', 'blog', 'research'], priority: 2, keywords: ['LLM', 'MLOps', 'model serving', 'inference optimization', 'vLLM'] },
+  { group_name: 'AI 반도체/칩', category: 'tech', content_types: ['news', 'blog', 'global'], priority: 2, keywords: ['AI 반도체', 'AI chip', 'NPU', 'AI accelerator', '리벨리온', '퓨리오사', 'Groq', 'Cerebras'] },
+  { group_name: 'AI 클라우드/인프라 기업', category: 'competitive', content_types: ['news', 'investment'], priority: 1, keywords: ['래블업', 'Lablup', 'Backend.AI', '노타', 'Nota AI', '마키나락스', 'MakinaRocks', 'CoreWeave', 'Lambda Labs', 'Together AI'] },
   // Priority 3 (참고)
   { group_name: '글로벌 AI', category: 'regulation', content_types: ['global', 'news'], priority: 3, keywords: ['AI governance', 'EU AI Act', 'AI safety', 'OECD AI'] },
   { group_name: '글로벌 테크', category: 'tech', content_types: ['global', 'blog'], priority: 3, keywords: ['OpenAI', 'Anthropic', 'Google DeepMind', 'Meta AI', 'xAI'] },
+  { group_name: '국내 AI 스타트업', category: 'competitive', content_types: ['news', 'investment'], priority: 2, keywords: ['업스테이지', 'Upstage', '튜닙', 'Tunib', '뤼튼', 'Wrtn', '카카오브레인', '네이버클라우드', 'CLOVA', 'HyperCLOVA'] },
 ];
 
 export async function GET() {
