@@ -1,0 +1,9 @@
+{
+  "name": "ACRYL Intelligence Brief",
+  "short_name": "ACRYL Intel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F4F6",
+  "theme_color": "#1E40AF",
+  "icons": []
+}
