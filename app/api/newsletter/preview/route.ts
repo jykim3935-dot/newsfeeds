@@ -7,47 +7,52 @@ import type { Article, Trend } from '@/lib/types';
 export async function GET() {
   const supabase = getSupabaseAdmin();
 
-  // Get all recent articles (last 7 days) across all batches
-  const since = new Date(Date.now() - 7 * 86400000).toISOString();
-  const { data: articles } = await supabase
-    .from('articles')
-    .select('*')
-    .gte('created_at', since)
-    .order('relevance_score', { ascending: false })
-    .limit(100);
-
-  // Get latest brief
+  // Get latest completed run
   const { data: latestRun } = await supabase
     .from('pipeline_runs')
-    .select('executive_brief')
+    .select('*')
     .eq('status', 'completed')
     .order('completed_at', { ascending: false })
     .limit(1)
     .single();
 
-  // Get recent trends
-  const { data: trends } = await supabase
-    .from('trends')
-    .select('*')
-    .gte('created_at', since)
-    .order('created_at', { ascending: false });
-
-  if (!articles || articles.length === 0) {
-    return new NextResponse('<h1>기사가 없습니다. 파이프라인을 먼저 실행해주세요.</h1>', {
+  if (!latestRun) {
+    return new NextResponse('<h1>파이프라인을 먼저 실행해주세요.</h1>', {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   }
 
-  const date = new Date().toLocaleDateString('ko-KR', {
+  // Get articles from this batch
+  const { data: batchArticles } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('batch_id', latestRun.batch_id)
+    .order('relevance_score', { ascending: false });
+
+  const articles = (batchArticles || []) as Article[];
+
+  if (articles.length === 0) {
+    return new NextResponse('<h1>이 배치에 기사가 없습니다.</h1>', {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  }
+
+  // Get trends from this batch
+  const { data: trends } = await supabase
+    .from('trends')
+    .select('*')
+    .eq('batch_id', latestRun.batch_id);
+
+  const date = new Date(latestRun.completed_at || latestRun.started_at).toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
   });
 
-  const { subject, preheader } = generateSubjectLine(articles as Article[], date);
+  const { subject, preheader } = generateSubjectLine(articles, date);
 
   const html = renderNewsletter({
-    articles: articles as Article[],
+    articles,
     date,
-    executiveBrief: latestRun?.executive_brief || '브리프가 아직 생성되지 않았습니다.',
+    executiveBrief: latestRun.executive_brief || '',
     trends: (trends || []) as Trend[],
     subjectLine: subject,
     preheaderText: preheader,
