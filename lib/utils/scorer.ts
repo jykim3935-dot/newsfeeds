@@ -33,8 +33,8 @@ const SCORING_RULES: Array<{
   category: Category;
   label: string;
 }> = [
-  // 직접 경쟁사 (8점, yellow) — red 남발 방지
-  { keywords: ['제논', 'GenOn', '마인즈앤컴퍼니'], score: 8, urgency: 'yellow', category: 'competitive', label: '직접 경쟁사 동향' },
+  // 직접 경쟁사 (8점, yellow) — "제논" 단독은 동음이의어 많아서 제외
+  { keywords: ['제논 AI', 'GenOn', '마인즈앤컴퍼니', '제논데이타'], score: 8, urgency: 'yellow', category: 'competitive', label: '직접 경쟁사 동향' },
   { keywords: ['Run:ai', 'Run.ai'], score: 8, urgency: 'yellow', category: 'competitive', label: 'GPU 오케스트레이션 글로벌 경쟁사' },
 
   // GPU 인프라 시장 (8점, yellow)

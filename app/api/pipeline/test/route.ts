@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       .from('trends').select('*')
       .eq('batch_id', latestRun.batch_id);
 
-    const date = new Date(latestRun.completed_at || latestRun.started_at).toLocaleDateString('ko-KR', {
+    const date = new Date().toLocaleDateString('ko-KR', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
     });
 
