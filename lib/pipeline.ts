@@ -18,6 +18,16 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   ]);
 }
 
+// Vercel Hobby: 60s 제한. 각 단계별 시간 예산.
+const TIMEOUT = {
+  RSS: 25000,
+  OTHER_COLLECTORS: 15000,
+  CURATION: 15000,
+  BRIEF: 12000,
+  TRENDS: 12000,
+  TOTAL_BUDGET: 50000,
+} as const;
+
 export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
   const start = Date.now();
   const supabase = getSupabaseAdmin();
@@ -66,7 +76,7 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     if (rssCollector) {
       const cStart = Date.now();
       try {
-        const articles = await withTimeout(rssCollector.collect(batchId), 25000, []);
+        const articles = await withTimeout(rssCollector.collect(batchId), TIMEOUT.RSS, []);
         allArticles.push(...articles);
         metrics.collectors.rss = { count: articles.length, duration_ms: Date.now() - cStart, errors: [] };
         logger.info('pipeline', `RSS: ${articles.length} articles`);
@@ -78,13 +88,13 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     }
 
     // Other collectors (websearch, gov, research, dart) — parallel, 15s timeout
-    const remaining = 50000 - (Date.now() - start); // Leave time for curation
-    if (remaining > 15000) {
+    const remaining = TIMEOUT.TOTAL_BUDGET - (Date.now() - start);
+    if (remaining > TIMEOUT.OTHER_COLLECTORS) {
       const results = await Promise.allSettled(
         otherCollectors.map(async (collector) => {
           const cStart = Date.now();
           try {
-            const articles = await withTimeout(collector.collect(batchId), 15000, []);
+            const articles = await withTimeout(collector.collect(batchId), TIMEOUT.OTHER_COLLECTORS, []);
             metrics.collectors[collector.name] = { count: articles.length, duration_ms: Date.now() - cStart, errors: [] };
             return articles;
           } catch (err) {
@@ -116,7 +126,7 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     try {
       const curationResult = await withTimeout(
         basicCuration(allArticles, batchId),
-        15000,
+        TIMEOUT.CURATION,
         { articles: [], apiCalls: 0, tokensIn: 0, tokensOut: 0, warnings: ['Curation timed out'] }
       );
       curatedArticles = curationResult.articles;
@@ -159,12 +169,12 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     const [briefResult, trendResult] = await Promise.all([
       withTimeout(
         generateBrief(finalArticles),
-        12000,
+        TIMEOUT.BRIEF,
         { brief: '브리프 생성 시간 초과', tokensIn: 0, tokensOut: 0, warning: 'Brief timed out' }
       ),
       withTimeout(
         detectTrends(finalArticles, batchId),
-        12000,
+        TIMEOUT.TRENDS,
         { trends: [] as Trend[], tokensIn: 0, tokensOut: 0, warning: 'Trends timed out' }
       ),
     ]);
