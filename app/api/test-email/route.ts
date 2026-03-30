@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/clients/resend';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,42 +9,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ usage: '/api/test-email?to=your@email.com' });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  // TODO: acryl.ai 도메인 인증 완료 후 'intel@acryl.ai'로 변경
-  const from = 'onboarding@resend.dev';
+  const result = await sendEmail({
+    to: [to],
+    subject: '[ACRYL Intel] 테스트 이메일',
+    html: '<h1>ACRYL Intelligence Brief</h1><p>이 이메일이 보이면 발송 설정이 정상입니다.</p>',
+  });
 
-  if (!apiKey) {
-    return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
-  }
-
-  // from is hardcoded above
-
-  try {
-    const resend = new Resend(apiKey);
-    const result = await resend.emails.send({
-      from: `ACRYL Intel <${from}>`,
-      to: [to],
-      subject: '[ACRYL Intel] 테스트 이메일',
-      html: '<h1>ACRYL Intelligence Brief</h1><p>이 이메일이 보이면 발송 설정이 정상입니다.</p>',
-    });
-
-    return NextResponse.json({
-      success: true,
-      from,
-      to,
-      resend_response: result,
-    });
-  } catch (err: unknown) {
-    const error = err as { message?: string; statusCode?: number; name?: string };
-    return NextResponse.json({
-      success: false,
-      from,
-      to,
-      error: {
-        message: error.message,
-        statusCode: error.statusCode,
-        name: error.name,
-      },
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    success: result.success,
+    to,
+    error: result.error || null,
+  }, { status: result.success ? 200 : 500 });
 }

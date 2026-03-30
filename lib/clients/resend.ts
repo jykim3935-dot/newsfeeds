@@ -13,9 +13,15 @@ interface SendEmailOptions {
   html: string;
 }
 
+// SENDER_EMAIL 환경변수 우선, 없으면 onboarding@resend.dev (Resend 테스트용)
+function getSenderEmail(): string {
+  const env = process.env.SENDER_EMAIL;
+  if (env && env !== 'onboarding@resend.dev') return env;
+  return 'onboarding@resend.dev';
+}
+
 export async function sendEmail(opts: SendEmailOptions): Promise<{ success: boolean; error?: string }> {
-  // TODO: acryl.ai 도메인 인증 완료 후 'intel@acryl.ai'로 변경
-  const from = 'onboarding@resend.dev';
+  const from = getSenderEmail();
   try {
     await getResend().emails.send({
       from: `ACRYL Intel <${from}>`,
@@ -23,7 +29,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
       subject: opts.subject,
       html: opts.html,
     });
-    logger.info('sendEmail', `Sent to ${opts.to.length} recipients`);
+    logger.info('sendEmail', `Sent to ${opts.to.length} recipients from ${from}`);
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

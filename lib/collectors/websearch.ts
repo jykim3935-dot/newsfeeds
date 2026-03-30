@@ -1,53 +1,13 @@
 import type { CollectedArticle, KeywordGroup } from '@/lib/types';
 import type { Collector } from './base';
+import { callClaude } from '@/lib/clients/anthropic';
+import { getSupabaseAdmin } from '@/lib/clients/supabase';
 import { safeParseJSON } from '@/lib/utils/json-parser';
 import { logger } from '@/lib/utils/logger';
-
-// Claude API with web_search tool (raw fetch — SDK doesn't support web_search yet)
-async function claudeWebSearch(query: string): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
-      messages: [{
-        role: 'user',
-        content: `다음 키워드와 관련된 최신 뉴스를 웹에서 검색하세요: ${query}
-
-검색 결과를 다음 JSON 형식으로 정리하세요:
-{"articles": [{"title": "제목", "url": "URL", "source": "출처", "published_at": "YYYY-MM-DD", "summary": "3-4문장 요약"}]}
-
-최대 5건, JSON만 반환하세요.`,
-      }],
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err}`);
-  }
-
-  const data = await res.json();
-  let text = '';
-  for (const block of data.content || []) {
-    if (block.type === 'text') text += block.text;
-  }
-  return text;
-}
 
 export const websearchCollector: Collector = {
   name: 'websearch',
   async collect(batchId: string): Promise<CollectedArticle[]> {
-    const { getSupabaseAdmin } = await import('@/lib/clients/supabase');
     const supabase = getSupabaseAdmin();
     const { data: groups } = await supabase
       .from('keyword_groups')
@@ -64,7 +24,22 @@ export const websearchCollector: Collector = {
     for (const group of topGroups) {
       try {
         const query = group.keywords.slice(0, 5).join(' OR ');
-        const text = await claudeWebSearch(query);
+
+        const result = await callClaude({
+          model: 'fast',
+          webSearch: true,
+          userMessage: `다음 키워드와 관련된 최신 뉴스를 웹에서 검색하세요: ${query}
+
+검색 결과를 다음 JSON 형식으로 정리하세요:
+{"articles": [{"title": "제목", "url": "URL", "source": "출처", "published_at": "YYYY-MM-DD", "summary": "3-4문장 요약"}]}
+
+최대 5건, JSON만 반환하세요.`,
+          label: `websearch-${group.group_name}`,
+        });
+
+        const text = result.message.content[0]?.type === 'text'
+          ? (result.message.content[0] as { type: 'text'; text: string }).text
+          : '';
 
         const parsed = safeParseJSON<{ articles?: Array<{ title: string; url: string; source?: string; published_at?: string; summary?: string }> }>(text, { articles: [] });
 
