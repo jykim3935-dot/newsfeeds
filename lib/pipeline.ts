@@ -32,7 +32,7 @@ export async function runPipeline(testEmail?: string): Promise<PipelineResult> {
     .select()
     .single();
 
-  if (runError || !run) throw new Error('Failed to create pipeline run');
+  if (runError || !run) throw new Error(`Failed to create pipeline run: ${runError?.message || 'no data returned'}`);
 
   const batchId = run.batch_id;
   const errors: string[] = [];
