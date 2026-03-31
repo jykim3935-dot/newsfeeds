@@ -19,7 +19,7 @@ export const websearchCollector: Collector = {
     if (!groups || groups.length === 0) return [];
 
     const results: CollectedArticle[] = [];
-    const topGroups = (groups as KeywordGroup[]).filter((g) => g.priority === 1).slice(0, 3);
+    const topGroups = (groups as KeywordGroup[]).filter((g) => g.priority === 1).slice(0, 5);
 
     for (const group of topGroups) {
       try {
