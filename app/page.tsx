@@ -138,11 +138,8 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/pipeline/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      });
+      // DB 초기화 + 파이프라인 실행 (한 번에)
+      const res = await fetch('/api/reset');
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(data.error || `Error ${res.status}`);

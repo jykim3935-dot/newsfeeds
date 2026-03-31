@@ -68,6 +68,8 @@ const IRRELEVANT_PATTERNS = [
   'ChatGPT 사용법', 'AI 그림', 'AI 음악', 'AI 작곡',
   '세미나 안내', '워크숍 개최', 'obituary', 'funeral',
   'marine patrol', 'police officer', 'weather',
+  '희귀가스', '제논 파마', 'XENE', 'xenon gas',
+  '휴머노이드 로봇', 'humanoid robot',
 ];
 
 export function scoreArticle(article: CollectedArticle): ScoringResult {
