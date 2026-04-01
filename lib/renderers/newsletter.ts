@@ -15,183 +15,158 @@ export function renderNewsletter(data: NewsletterData): string {
 
   const redCount = diversified.filter((a) => a.urgency === 'red').length;
   const yellowCount = diversified.filter((a) => a.urgency === 'yellow').length;
-  const total = diversified.length;
+  const greenCount = diversified.length - redCount - yellowCount;
+
+  const S = styles;
 
   return `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>${esc(subjectLine)}</title>
-</head>
-<body style="margin:0;padding:0;background:#F4F5F7;font-family:-apple-system,'Segoe UI','Noto Sans KR',sans-serif;color:#1A1A1A;">
-  <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F4F5F7;">${esc(preheaderText)}</div>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5F7;">
-    <tr><td align="center" style="padding:16px 10px;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(subjectLine)}</title></head>
+<body style="margin:0;padding:0;background:#E8E8E8;font-family:'Segoe UI',-apple-system,'Noto Sans KR',sans-serif;font-size:13px;color:#222;">
+<div style="display:none;max-height:0;overflow:hidden;">${esc(preheaderText)}</div>
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:12px 6px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#F0F0F0;">
 
-        <!-- HEADER CARD -->
-        <tr><td style="background:#1A2744;padding:24px;border-radius:16px 16px 0 0;">
-          <div style="font-size:24px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;">ACRYL Intelligence Brief</div>
-          <div style="font-size:13px;color:#8B9DC3;margin-top:6px;">${esc(date)}</div>
-          <table cellpadding="0" cellspacing="0" style="margin-top:12px;">
-            <tr>
-              <td style="padding:4px 10px;background:rgba(255,255,255,0.12);border-radius:20px;margin-right:6px;">
-                <span style="font-size:12px;color:#fff;">📊 ${total}건</span>
-              </td>
-              <td style="padding:4px 10px;background:rgba(239,68,68,0.2);border-radius:20px;margin-left:4px;">
-                <span style="font-size:12px;color:#FCA5A5;">🔴 ${redCount}</span>
-              </td>
-              <td style="padding:4px 10px;background:rgba(245,158,11,0.2);border-radius:20px;margin-left:4px;">
-                <span style="font-size:12px;color:#FCD34D;">🟡 ${yellowCount}</span>
-              </td>
-            </tr>
-          </table>
-        </td></tr>
+  <!-- HEADER BAR -->
+  <tr><td style="${S.header}">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="font-size:16px;font-weight:700;color:#fff;">ACRYL Intelligence Brief</td>
+      <td style="text-align:right;font-size:12px;color:#B0C4DE;">${esc(date)}</td>
+    </tr></table>
+  </td></tr>
 
-        <!-- BRIEF CARD -->
-        <tr><td style="padding:0 0 12px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:0 0 16px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-            <tr><td style="padding:20px 24px;">
-              <div style="font-size:11px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📌 오늘의 핵심</div>
-              <div style="font-size:14px;line-height:2;color:#374151;white-space:pre-line;">${esc(briefText)}</div>
-            </td></tr>
-          </table>
-        </td></tr>
+  <!-- STAT BOXES -->
+  <tr><td style="padding:8px;">
+    <table width="100%" cellpadding="0" cellspacing="6"><tr>
+      <td style="${S.statBox}"><div style="font-size:22px;font-weight:700;">${diversified.length}</div><div style="font-size:11px;color:#666;">수집 기사</div></td>
+      <td style="${S.statBox}"><div style="font-size:22px;font-weight:700;color:#D32F2F;">${redCount}</div><div style="font-size:11px;color:#666;">🔴 긴급</div></td>
+      <td style="${S.statBox}"><div style="font-size:22px;font-weight:700;color:#F57C00;">${yellowCount}</div><div style="font-size:11px;color:#666;">🟡 주의</div></td>
+      <td style="${S.statBox}"><div style="font-size:22px;font-weight:700;color:#388E3C;">${greenCount}</div><div style="font-size:11px;color:#666;">🟢 참고</div></td>
+    </tr></table>
+  </td></tr>
 
-        ${highArticles.length > 0 ? `
-        <!-- MAIN ARTICLES CARD -->
-        <tr><td style="padding:0 0 12px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-            <tr><td style="padding:20px 24px 8px;">
-              <div style="font-size:11px;font-weight:700;color:#1A2744;text-transform:uppercase;letter-spacing:1px;">📰 주요 뉴스 (${highArticles.length})</div>
-            </td></tr>
-            <tr><td style="padding:0 16px 16px;">
-              ${highArticles.map((a) => renderCard(a)).join('')}
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+  <!-- BRIEF SECTION -->
+  <tr><td style="padding:0 8px 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="${S.section}">
+      <tr><td style="${S.sectionHead}">오늘의 핵심</td></tr>
+      <tr><td style="padding:10px 12px;font-size:13px;line-height:1.8;color:#333;white-space:pre-line;">${esc(briefText)}</td></tr>
+    </table>
+  </td></tr>
 
-        ${lowArticles.length > 0 ? `
-        <!-- OTHER ARTICLES CARD -->
-        <tr><td style="padding:0 0 12px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-            <tr><td style="padding:20px 24px 8px;">
-              <div style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1px;">기타 뉴스 (${lowArticles.length})</div>
-            </td></tr>
-            <tr><td style="padding:0 16px 16px;">
-              ${lowArticles.map((a) => renderMini(a)).join('')}
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+  ${highArticles.length > 0 ? `
+  <!-- MAIN ARTICLES -->
+  <tr><td style="padding:0 8px 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="${S.section}">
+      <tr><td style="${S.sectionHead}">주요 기사 (${highArticles.length}건)</td></tr>
+      <tr><td style="padding:4px;">
+        ${highArticles.map((a) => renderRow(a)).join('')}
+      </td></tr>
+    </table>
+  </td></tr>` : ''}
 
-        ${trends.length > 0 ? `
-        <!-- TRENDS CARD -->
-        <tr><td style="padding:0 0 12px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-            <tr><td style="padding:20px 24px 8px;">
-              <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;">📈 트렌드</div>
-            </td></tr>
-            <tr><td style="padding:0 16px 16px;">
-              ${trends.map((t) => renderTrend(t)).join('')}
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+  ${lowArticles.length > 0 ? `
+  <!-- OTHER ARTICLES -->
+  <tr><td style="padding:0 8px 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="${S.section}">
+      <tr><td style="${S.sectionHead}; color:#666;">기타 뉴스 (${lowArticles.length}건)</td></tr>
+      <tr><td style="padding:4px;">
+        ${lowArticles.map((a) => renderCompact(a)).join('')}
+      </td></tr>
+    </table>
+  </td></tr>` : ''}
 
-        ${acrylArticles.length > 0 ? `
-        <!-- ACRYL CARD -->
-        <tr><td style="padding:0 0 12px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F4FF;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <tr><td style="padding:20px 24px 8px;">
-              <div style="font-size:11px;font-weight:700;color:#3B5998;text-transform:uppercase;letter-spacing:1px;">🏢 ACRYL 관련 (${acrylArticles.length})</div>
-            </td></tr>
-            <tr><td style="padding:0 16px 16px;">
-              ${acrylArticles.map((a) => renderMini(a)).join('')}
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+  ${trends.length > 0 ? `
+  <tr><td style="padding:0 8px 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="${S.section}">
+      <tr><td style="${S.sectionHead}; color:#2E7D32;">📈 트렌드</td></tr>
+      <tr><td style="padding:4px;">
+        ${trends.map((t) => `<div style="padding:6px 10px;border-bottom:1px solid #E0E0E0;">
+          <span style="font-weight:600;">${esc(t.trend_title)}</span>
+          <div style="font-size:12px;color:#555;margin-top:2px;">${esc(t.trend_description)}</div>
+        </div>`).join('')}
+      </td></tr>
+    </table>
+  </td></tr>` : ''}
 
-        <!-- FOOTER -->
-        <tr><td style="padding:8px 20px 20px;text-align:center;">
-          <div style="font-size:11px;color:#9CA3AF;line-height:1.6;">
-            ACRYL Intelligence Brief v3 · Powered by Claude AI<br>
-            본 브리프는 AI 자동 분석 결과이며 투자 조언이 아닙니다.
-          </div>
-        </td></tr>
+  ${acrylArticles.length > 0 ? `
+  <tr><td style="padding:0 8px 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="${S.section}">
+      <tr><td style="${S.sectionHead}; background:#E3F2FD; color:#1565C0;">🏢 ACRYL 관련 (${acrylArticles.length})</td></tr>
+      <tr><td style="padding:4px;">
+        ${acrylArticles.map((a) => renderCompact(a)).join('')}
+      </td></tr>
+    </table>
+  </td></tr>` : ''}
 
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  <!-- FOOTER -->
+  <tr><td style="padding:8px;text-align:center;font-size:11px;color:#999;">
+    ACRYL Intelligence Brief v3 · Powered by Claude AI · 투자 조언 아님
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 }
 
-function renderCard(a: Article): string {
-  const urgencyBg = a.urgency === 'red' ? '#FEF2F2' : a.urgency === 'yellow' ? '#FFFBEB' : '#F9FAFB';
-  const urgencyColor = a.urgency === 'red' ? '#EF4444' : a.urgency === 'yellow' ? '#F59E0B' : '#9CA3AF';
-  const urgencyText = a.urgency === 'red' ? '긴급' : a.urgency === 'yellow' ? '주의' : '참고';
-  const catLabel = getCatLabel(a.category || '');
+// === 스타일 상수 ===
+const styles = {
+  header: 'background:#1B2A4A;padding:12px 16px;',
+  statBox: 'background:#FFF;border:1px solid #CCC;padding:10px;text-align:center;width:25%;',
+  section: 'background:#FFF;border:1px solid #BBB;',
+  sectionHead: 'padding:6px 12px;background:#E8E8E8;border-bottom:1px solid #BBB;font-size:12px;font-weight:700;color:#333;',
+};
+
+// === 기사 행 렌더링 ===
+
+function renderRow(a: Article): string {
+  const dot = a.urgency === 'red' ? '🔴' : a.urgency === 'yellow' ? '🟡' : '🟢';
+  const scoreColor = a.urgency === 'red' ? '#D32F2F' : a.urgency === 'yellow' ? '#F57C00' : '#666';
+  const cat = getCatLabel(a.category || '');
   const impact = a.impact_comment && a.impact_comment !== '일반 기술 뉴스' ? a.impact_comment : '';
   const summary = a.summary || '';
   const isEng = isEnglish(a.title);
 
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #E5E7EB;background:${urgencyBg};">
-    <tr><td style="padding:16px;">
-      <!-- 태그 라인 -->
-      <table cellpadding="0" cellspacing="0" style="margin-bottom:10px;"><tr>
-        <td style="padding:3px 10px;background:${urgencyColor};border-radius:6px;">
-          <span style="font-size:11px;font-weight:700;color:#FFF;">${urgencyText}</span>
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #E0E0E0;">
+    <tr><td style="padding:10px 10px 4px;">
+      <!-- 상단: 상태 + 점수 + 카테고리 + 출처 -->
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="font-size:12px;">
+          ${dot} <span style="color:${scoreColor};font-weight:700;">${a.relevance_score}/10</span>
+          <span style="color:#888;margin-left:4px;">${esc(cat)}</span>
         </td>
-        <td style="padding:3px 10px;background:#E5E7EB;border-radius:6px;margin-left:6px;">
-          <span style="font-size:11px;font-weight:600;color:#374151;">${esc(catLabel)}</span>
-        </td>
-        <td style="padding-left:8px;">
-          <span style="font-size:13px;font-weight:800;color:${urgencyColor};">${a.relevance_score}/10</span>
-        </td>
+        <td style="text-align:right;font-size:11px;color:#999;">${esc(a.source || '')} · ${esc(a.published_at || '')}</td>
       </tr></table>
-
-      <!-- 제목 -->
-      <a href="${esc(a.url)}" style="font-size:16px;font-weight:600;color:#111827;text-decoration:none;line-height:1.5;display:block;margin-bottom:6px;">${esc(a.title)}</a>
-      ${isEng ? `<div style="font-size:12px;color:#6366F1;margin-bottom:6px;">🌐 영문 기사</div>` : ''}
-
-      <!-- 출처 -->
-      <div style="font-size:12px;color:#9CA3AF;margin-bottom:10px;">${esc(a.source || '')}${a.published_at ? ` · ${esc(a.published_at)}` : ''}</div>
-
-      <!-- 시사점 -->
-      ${impact ? `<div style="font-size:13px;font-weight:600;color:${urgencyColor};margin-bottom:8px;">💡 ${esc(impact)}</div>` : ''}
-
-      <!-- 요약 박스 -->
-      ${summary ? `<table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="padding:12px 14px;background:#FFFFFF;border-radius:10px;border:1px solid #F3F4F6;">
-          <div style="font-size:13px;color:#4B5563;line-height:1.7;">${esc(summary.length > 280 ? summary.slice(0, 280) + '…' : summary)}</div>
-        </td>
-      </tr></table>` : ''}
     </td></tr>
+    <tr><td style="padding:2px 10px;">
+      <!-- 제목 -->
+      <a href="${esc(a.url)}" style="font-size:14px;font-weight:600;color:#1A0DAB;text-decoration:none;line-height:1.5;">${esc(a.title)}</a>
+      ${isEng ? ' <span style="font-size:11px;color:#7B1FA2;">[EN]</span>' : ''}
+    </td></tr>
+    ${impact ? `<tr><td style="padding:2px 10px;">
+      <span style="font-size:12px;color:${scoreColor};font-weight:600;">💡 ${esc(impact)}</span>
+    </td></tr>` : ''}
+    ${summary ? `<tr><td style="padding:4px 10px 10px;">
+      <div style="font-size:12px;color:#555;line-height:1.6;background:#FAFAFA;border:1px solid #EEE;padding:8px 10px;">${esc(summary.length > 250 ? summary.slice(0, 250) + '…' : summary)}</div>
+    </td></tr>` : `<tr><td style="padding:0 0 6px;"></td></tr>`}
   </table>`;
 }
 
-function renderMini(a: Article): string {
+function renderCompact(a: Article): string {
+  const dot = a.urgency === 'red' ? '🔴' : a.urgency === 'yellow' ? '🟡' : '🟢';
   const summary = a.summary || '';
   const short = summary.length > 100 ? summary.slice(0, 100) + '…' : summary;
 
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0;border-radius:10px;overflow:hidden;border:1px solid #F3F4F6;background:#FAFAFA;">
-    <tr><td style="padding:12px 14px;">
-      <a href="${esc(a.url)}" style="font-size:14px;font-weight:500;color:#111827;text-decoration:none;line-height:1.4;display:block;">${esc(a.title)}</a>
-      <div style="font-size:12px;color:#9CA3AF;margin-top:4px;">
-        ${esc(a.source || '')} · ${esc(getCatLabel(a.category || ''))} · ${a.relevance_score || '-'}/10
-      </div>
-      ${short ? `<div style="font-size:13px;color:#6B7280;margin-top:6px;line-height:1.5;">${esc(short)}</div>` : ''}
-    </td></tr>
-  </table>`;
-}
-
-function renderTrend(t: Trend): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0;border-radius:10px;background:#ECFDF5;border:1px solid #D1FAE5;">
-    <tr><td style="padding:12px 14px;">
-      <div style="font-size:14px;font-weight:600;color:#065F46;margin-bottom:4px;">${esc(t.trend_title)}</div>
-      <div style="font-size:13px;color:#374151;line-height:1.5;">${esc(t.trend_description)}</div>
-    </td></tr>
-  </table>`;
+  return `<div style="padding:6px 10px;border-bottom:1px solid #EEE;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td>
+        ${dot} <a href="${esc(a.url)}" style="font-size:13px;color:#1A0DAB;text-decoration:none;font-weight:500;">${esc(a.title)}</a>
+        ${isEnglish(a.title) ? ' <span style="font-size:10px;color:#7B1FA2;">[EN]</span>' : ''}
+      </td>
+      <td style="text-align:right;white-space:nowrap;font-size:11px;color:#999;padding-left:8px;">${a.relevance_score}/10</td>
+    </tr></table>
+    <div style="font-size:11px;color:#888;margin-top:1px;">${esc(a.source || '')} · ${esc(getCatLabel(a.category || ''))}</div>
+    ${short ? `<div style="font-size:12px;color:#666;margin-top:3px;line-height:1.5;">${esc(short)}</div>` : ''}
+  </div>`;
 }
 
 // === 유틸 ===
@@ -199,8 +174,7 @@ function renderTrend(t: Trend): string {
 function isEnglish(text: string): boolean {
   const letters = text.replace(/[^a-zA-Z가-힣]/g, '');
   if (letters.length === 0) return false;
-  const eng = letters.replace(/[^a-zA-Z]/g, '').length;
-  return eng > letters.length * 0.5;
+  return letters.replace(/[^a-zA-Z]/g, '').length > letters.length * 0.5;
 }
 
 function diversifyArticles(articles: Article[]): Article[] {
