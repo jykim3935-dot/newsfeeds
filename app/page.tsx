@@ -42,7 +42,15 @@ interface KeywordItem {
   enabled: boolean;
 }
 
-type TabType = 'overview' | 'articles' | 'pipeline' | 'sources' | 'keywords';
+interface NewsletterItem {
+  id: string;
+  title: string;
+  date: string;
+  articles_count: number;
+  created_at: string;
+}
+
+type TabType = 'overview' | 'articles' | 'pipeline' | 'sources' | 'keywords' | 'newsletters';
 
 const TAB_LABELS: Record<TabType, string> = {
   overview: '개요',
@@ -50,6 +58,7 @@ const TAB_LABELS: Record<TabType, string> = {
   pipeline: '파이프라인',
   sources: '소스 관리',
   keywords: '키워드 관리',
+  newsletters: '뉴스레터',
 };
 
 const CONTENT_TYPE_OPTIONS = ['AI/기술', '산업/시장', '정책/규제', '경영/전략', '글로벌'];
@@ -71,6 +80,9 @@ export default function Dashboard() {
   const [keywords, setKeywords] = useState<KeywordItem[]>([]);
   const [keywordsLoading, setKeywordsLoading] = useState(false);
   const [newKeyword, setNewKeyword] = useState({ group_name: '', category: 'tech', priority: 2, keywords: '' });
+
+  // Newsletters state
+  const [newsletters, setNewsletters] = useState<NewsletterItem[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -129,10 +141,46 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  const fetchNewsletters = useCallback(async () => {
+    try {
+      const res = await fetch('/api/newsletters');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setNewsletters(data);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const saveNewsletter = async () => {
+    const title = prompt('뉴스레터 제목:', `ACRYL Intel ${new Date().toLocaleDateString('ko-KR')}`);
+    if (!title) return;
+    try {
+      const res = await fetch('/api/newsletters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+      if (res.ok) {
+        alert('뉴스레터가 저장되었습니다.');
+        fetchNewsletters();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || '저장 실패');
+      }
+    } catch { alert('저장 실패'); }
+  };
+
+  const deleteNewsletter = async (id: string) => {
+    if (!confirm('이 뉴스레터를 삭제하시겠습니까?')) return;
+    await fetch(`/api/newsletters/${id}`, { method: 'DELETE' });
+    setNewsletters((prev) => prev.filter((n) => n.id !== id));
+  };
+
   useEffect(() => {
     if (tab === 'sources') fetchSources();
     if (tab === 'keywords') fetchKeywords();
-  }, [tab, fetchSources, fetchKeywords]);
+    if (tab === 'newsletters') fetchNewsletters();
+  }, [tab, fetchSources, fetchKeywords, fetchNewsletters]);
 
   const triggerPipeline = async () => {
     setLoading(true);
@@ -354,6 +402,10 @@ export default function Dashboard() {
             <button onClick={shareKakao}
               style={{ padding: '8px 16px', background: '#FEE500', color: '#3C1E1E', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer', fontWeight: 600 }}>
               💬 카톡 공유
+            </button>
+            <button onClick={saveNewsletter}
+              style={{ padding: '8px 16px', background: '#7C3AED', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer' }}>
+              💾 저장
             </button>
           </div>
 
@@ -577,6 +629,29 @@ export default function Dashboard() {
                   삭제
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'newsletters' && (
+        <div>
+          {newsletters.length === 0 && <p style={{ fontSize: 14, color: '#6b7280' }}>저장된 뉴스레터가 없습니다. 개요 탭에서 💾 저장을 눌러주세요.</p>}
+          {newsletters.map((nl) => (
+            <div key={nl.id} style={{ background: '#fff', padding: 14, borderRadius: 8, marginBottom: 8, border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <a href={`/api/newsletters/${nl.id}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 15, fontWeight: 600, color: '#1A0DAB', textDecoration: 'none' }}>
+                  {nl.title}
+                </a>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                  {nl.date} · {nl.articles_count}건 · {new Date(nl.created_at).toLocaleString('ko-KR')}
+                </div>
+              </div>
+              <button onClick={() => deleteNewsletter(nl.id)}
+                style={{ padding: '4px 12px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 4, fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
+                삭제
+              </button>
             </div>
           ))}
         </div>

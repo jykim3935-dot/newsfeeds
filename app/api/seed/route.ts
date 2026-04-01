@@ -10,7 +10,7 @@ const SOURCES = [
   { name: '전자신문 경제', url: 'http://rss.etnews.com/02.xml', type: 'rss', content_type: 'news', category: 'market' },
   { name: '전자신문 속보', url: 'http://rss.etnews.com/Section902.xml', type: 'rss', content_type: 'news', category: 'market' },
   { name: 'ZDNet Korea', url: 'https://zdnet.co.kr/rss/newsall.xml', type: 'rss', content_type: 'news', category: 'tech' },
-  { name: '인공지능신문', url: 'http://www.newstheai.com/rss/allArticle.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '인공지능신문', url: 'https://www.newstheai.com/rss/allArticle.xml', type: 'rss', content_type: 'news', category: 'tech' },
   { name: '디지털타임스', url: 'http://www.dt.co.kr/rss/all.xml', type: 'rss', content_type: 'news', category: 'tech' },
   { name: '매일경제 IT', url: 'https://www.mk.co.kr/rss/30200030/', type: 'rss', content_type: 'news', category: 'market' },
   { name: '한국경제 IT', url: 'https://www.hankyung.com/feed/it', type: 'rss', content_type: 'news', category: 'market' },
