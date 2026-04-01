@@ -100,38 +100,44 @@ function renderCard(a: Article): string {
   const urgencyColor = a.urgency === 'red' ? '#DC2626' : a.urgency === 'yellow' ? '#D97706' : '#6B7280';
   const urgencyLabel = a.urgency === 'red' ? '긴급' : a.urgency === 'yellow' ? '주의' : '참고';
   const catLabel = getCatLabel(a.category || '');
-  const summary = a.impact_comment || a.summary || '';
+  const impact = a.impact_comment && a.impact_comment !== '일반 기술 뉴스' ? a.impact_comment : '';
+  const summary = a.summary || '';
 
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #E5E7EB;">
     <tr><td style="padding:14px 16px;background:${urgencyBg};">
-      <!-- 상단: 태그 -->
+      <!-- 태그 -->
       <div style="margin-bottom:8px;">
         <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#FFF;background:${urgencyColor};">${urgencyLabel}</span>
         <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;color:#374151;background:#E5E7EB;margin-left:4px;">${esc(catLabel)}</span>
         <span style="float:right;font-size:12px;font-weight:700;color:${urgencyColor};">${a.relevance_score || '-'}/10</span>
       </div>
       <!-- 제목 -->
-      <div style="font-size:15px;font-weight:600;color:#111;line-height:1.5;margin-bottom:6px;">
+      <div style="font-size:15px;font-weight:600;color:#111;line-height:1.5;margin-bottom:4px;">
         <a href="${esc(a.url)}" style="color:#111;text-decoration:none;">${esc(a.title)}</a>
       </div>
       <!-- 출처 -->
-      <div style="font-size:12px;color:#9CA3AF;margin-bottom:8px;">${esc(a.source || '')} · ${esc(a.published_at || '')}</div>
-      <!-- 요약 -->
-      ${summary ? `<div style="font-size:13px;color:#4B5563;line-height:1.7;background:#FFFFFF;padding:10px 12px;border-radius:6px;">${esc(summary)}</div>` : ''}
+      <div style="font-size:12px;color:#9CA3AF;margin-bottom:6px;">${esc(a.source || '')} · ${esc(a.published_at || '')}</div>
+      <!-- 시사점 -->
+      ${impact ? `<div style="font-size:12px;color:${urgencyColor};font-weight:600;margin-bottom:6px;">💡 ${esc(impact)}</div>` : ''}
+      <!-- 기사 내용 -->
+      ${summary ? `<div style="font-size:13px;color:#4B5563;line-height:1.7;background:#FFFFFF;padding:10px 12px;border-radius:6px;">${esc(summary.length > 300 ? summary.slice(0, 300) + '…' : summary)}</div>` : ''}
     </td></tr>
   </table>`;
 }
 
 function renderMiniCard(a: Article): string {
   const catLabel = getCatLabel(a.category || '');
+  const summary = a.summary || '';
+  const shortSummary = summary.length > 150 ? summary.slice(0, 150) + '…' : summary;
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">
-    <tr><td style="padding:8px 12px;background:#FFFFFF;border-radius:8px;border:1px solid #F3F4F6;">
+    <tr><td style="padding:10px 12px;background:#FFFFFF;border-radius:8px;border:1px solid #F3F4F6;">
       <div style="font-size:13px;font-weight:500;color:#1F2937;line-height:1.4;">
         <a href="${esc(a.url)}" style="color:#1F2937;text-decoration:none;">${esc(a.title)}</a>
       </div>
       <div style="font-size:11px;color:#9CA3AF;margin-top:3px;">
         <span style="color:#6B7280;font-weight:500;">${esc(catLabel)}</span> · ${esc(a.source || '')} · ${a.relevance_score || '-'}/10
       </div>
+      ${shortSummary ? `<div style="font-size:12px;color:#6B7280;margin-top:5px;line-height:1.5;">${esc(shortSummary)}</div>` : ''}
     </td></tr>
   </table>`;
 }
