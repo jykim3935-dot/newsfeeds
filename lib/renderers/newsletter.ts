@@ -128,11 +128,9 @@ function renderRow(a: Article): string {
 
   return `<table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #E0E0E0;">
     <tr><td style="padding:10px 10px 4px;">
-      <!-- 상단: 상태 + 점수 + 카테고리 + 출처 -->
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="font-size:12px;">
-          ${dot} <span style="color:${scoreColor};font-weight:700;">${a.relevance_score}/10</span>
-          <span style="color:#888;margin-left:4px;">${esc(cat)}</span>
+          ${dot} <span style="color:#888;">${esc(cat)}</span>
         </td>
         <td style="text-align:right;font-size:11px;color:#999;">${esc(a.source || '')} · ${esc(a.published_at || '')}</td>
       </tr></table>
@@ -162,7 +160,7 @@ function renderCompact(a: Article): string {
         ${dot} <a href="${esc(a.url)}" style="font-size:13px;color:#1A0DAB;text-decoration:none;font-weight:500;">${esc(a.title)}</a>
         ${isEnglish(a.title) ? ' <span style="font-size:10px;color:#7B1FA2;">[EN]</span>' : ''}
       </td>
-      <td style="text-align:right;white-space:nowrap;font-size:11px;color:#999;padding-left:8px;">${a.relevance_score}/10</td>
+      <td style="text-align:right;white-space:nowrap;font-size:11px;color:#999;padding-left:8px;">${esc(a.published_at || '')}</td>
     </tr></table>
     <div style="font-size:11px;color:#888;margin-top:1px;">${esc(a.source || '')} · ${esc(getCatLabel(a.category || ''))}</div>
     ${short ? `<div style="font-size:12px;color:#666;margin-top:3px;line-height:1.5;">${esc(short)}</div>` : ''}

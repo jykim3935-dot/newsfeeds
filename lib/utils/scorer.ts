@@ -97,7 +97,10 @@ export function scoreArticle(article: CollectedArticle): ScoringResult {
   }
 
   // 3단계: 외부 인텔리전스 스코어링
-  let bestScore = 3;
+  // AI/IT 관련 기사면 기본 5점 (우리 소스에서 온 기사는 최소 표시)
+  const aiKeywords = ['ai', 'gpu', '인공지능', '클라우드', '데이터', 'llm', '딥러닝', 'ml ', 'saas', '플랫폼', 'api', '스타트업', '투자', 'ipo', '상장', 'ai ', '에이전트'];
+  const hasAI = aiKeywords.some((k) => lowerText.includes(k));
+  let bestScore = hasAI ? 5 : 3;
   let bestUrgency: Urgency = 'green';
   let bestCategory: Category = 'tech';
   let bestLabel = '';
