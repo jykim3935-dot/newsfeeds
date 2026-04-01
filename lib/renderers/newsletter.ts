@@ -177,12 +177,8 @@ function isEnglish(text: string): boolean {
 
 function diversifyArticles(articles: Article[]): Article[] {
   const sorted = [...articles].sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
-  const count: Record<string, number> = {};
-  return sorted.filter((a) => {
-    const cat = a.category || 'tech';
-    count[cat] = (count[cat] || 0) + 1;
-    return count[cat] <= 5;
-  });
+  // 카테고리별 제한 없음. 점수 순으로 상위 50건만 표시.
+  return sorted.slice(0, 50);
 }
 
 function buildAutoBrief(articles: Article[]): string {

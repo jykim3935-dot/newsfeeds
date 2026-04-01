@@ -96,13 +96,10 @@ export function scoreArticle(article: CollectedArticle): ScoringResult {
     }
   }
 
-  // 3단계: 외부 인텔리전스 스코어링
-  // AI/IT 관련 기사면 기본 5점 (우리 소스에서 온 기사는 최소 표시)
-  const aiKeywords = ['ai', 'gpu', '인공지능', '클라우드', '데이터', 'llm', '딥러닝', 'ml ', 'saas', '플랫폼', 'api', '스타트업', '투자', 'ipo', '상장', 'ai ', '에이전트'];
-  const hasAI = aiKeywords.some((k) => lowerText.includes(k));
-  let bestScore = hasAI ? 5 : 3;
+  // 3단계: 기본 점수 + 카테고리 추정
+  let bestScore = 5; // 우리 소스에서 온 기사는 기본 표시
   let bestUrgency: Urgency = 'green';
-  let bestCategory: Category = 'tech';
+  let bestCategory: Category = guessCategory(lowerText, article.content_type);
   let bestLabel = '';
   let matchCount = 0;
 
@@ -129,7 +126,22 @@ export function scoreArticle(article: CollectedArticle): ScoringResult {
     relevance_score: bestScore,
     urgency: bestUrgency,
     category: bestCategory,
-    impact_comment: bestLabel || '일반 기술 뉴스',
+    impact_comment: bestLabel || '',
     is_acryl_mention: false,
   };
+}
+
+function guessCategory(text: string, contentType: string): Category {
+  // content_type 기반
+  if (contentType === 'investment') return 'investment';
+  if (contentType === 'government') return 'regulation';
+  if (contentType === 'consulting') return 'market';
+
+  // 키워드 기반 카테고리 추정
+  if (/투자|펀딩|ipo|상장|m&a|인수|매각|funding|series [a-c]/i.test(text)) return 'investment';
+  if (/정책|규제|법안|정부|공공|조달|인증/i.test(text)) return 'regulation';
+  if (/시장|전망|성장|매출|실적|점유율|market/i.test(text)) return 'market';
+  if (/경쟁|수주|계약|파트너|협력|제휴/i.test(text)) return 'competitive';
+  if (/고객|도입|구축|납품/i.test(text)) return 'customer';
+  return 'tech';
 }
