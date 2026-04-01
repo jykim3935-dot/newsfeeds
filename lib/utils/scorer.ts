@@ -46,8 +46,10 @@ const SCORING_RULES: Array<{
 
   // AI 에이전트/MCP (7점, yellow)
   { keywords: ['AI 에이전트', 'AI agent', 'MCP protocol', 'agentic AI'], score: 7, urgency: 'yellow', category: 'tech', label: 'AI 에이전트 — AGENTBASE 시장' },
-  // 의료 AI (7점, yellow)
-  { keywords: ['의료 AI', 'healthcare AI', 'medical AI', 'SaMD', '디지털치료제', 'AI 진단', '뷰노', '루닛', 'Lunit'], score: 7, urgency: 'yellow', category: 'tech', label: '의료 AI — NADIA 시장' },
+  // 의료/바이오 AI (8점, yellow) — NADIA 관련 핵심
+  { keywords: ['의료 AI', 'healthcare AI', 'medical AI', 'SaMD', '디지털치료제', 'AI 진단', '의료데이터', '의료 빅데이터', '정밀의료'], score: 8, urgency: 'yellow', category: 'tech', label: '의료 AI — NADIA 시장/규제' },
+  { keywords: ['뷰노', '루닛', 'Lunit', '딥노이드', '제이엘케이', 'JLK', '셀바스AI'], score: 8, urgency: 'yellow', category: 'competitive', label: '의료 AI 경쟁사' },
+  { keywords: ['바이오 AI', 'AI 신약', 'drug discovery', '바이오마커', 'AI 임상', '피부질환'], score: 7, urgency: 'yellow', category: 'tech', label: '바이오/제약 AI' },
   // 공공 AI (7점, yellow)
   { keywords: ['공공 AI', 'AI 조달', '나라장터', 'AI 데이터센터'], score: 7, urgency: 'yellow', category: 'regulation', label: '공공 AI 사업 기회' },
   // AI 투자 (7점, yellow)
