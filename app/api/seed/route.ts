@@ -31,6 +31,25 @@ const SOURCES = [
   { name: '아이뉴스24 IT', url: 'https://www.inews24.com/rss/news_it.xml', type: 'rss', content_type: 'news', category: 'tech' },
   { name: '더밀크', url: 'https://www.themilk.co.kr/feed', type: 'rss', content_type: 'news', category: 'market' },
   { name: '서울경제 IT', url: 'https://www.sedaily.com/RSS/IT', type: 'rss', content_type: 'news', category: 'market' },
+  // 종합일간지
+  { name: '중앙일보 경제', url: 'https://rss.joins.com/joins_economy_list.xml', type: 'rss', content_type: 'news', category: 'market' },
+  { name: '동아일보 IT', url: 'https://rss.donga.com/it.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '한겨레 미래', url: 'https://www.hani.co.kr/rss/science/', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '경향신문 경제', url: 'https://www.khan.co.kr/rss/rssdata/economy_news.xml', type: 'rss', content_type: 'news', category: 'market' },
+  // 경제지
+  { name: '머니투데이 IT', url: 'https://rss.mt.co.kr/mt/mtview/mt_it.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '머니투데이 경제', url: 'https://rss.mt.co.kr/mt/mtview/mt_stock.xml', type: 'rss', content_type: 'news', category: 'investment' },
+  { name: '이데일리 IT', url: 'https://rss.edaily.co.kr/edaily/Industry_IT.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '파이낸셜뉴스 IT', url: 'https://www.fnnews.com/rss/fn_it_index.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '아시아경제 IT', url: 'https://www.asiae.co.kr/rss/all.xml', type: 'rss', content_type: 'news', category: 'market' },
+  { name: '헤럴드경제 IT', url: 'http://biz.heraldcorp.com/common/rss.php?ct=010800', type: 'rss', content_type: 'news', category: 'tech' },
+  // IT 전문매체 (추가)
+  { name: '디지털데일리', url: 'https://www.ddaily.co.kr/rss/S1010001.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '전자신문 AI', url: 'http://rss.etnews.com/Section901.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '데이터넷', url: 'https://www.datanet.co.kr/rss/allArticle.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: '컴퓨터월드', url: 'https://www.comworld.co.kr/rss/allArticle.xml', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: 'CIO Korea', url: 'https://www.ciokorea.com/rss/', type: 'rss', content_type: 'news', category: 'tech' },
+  { name: 'ITWorld Korea', url: 'https://www.itworld.co.kr/rss/', type: 'rss', content_type: 'news', category: 'tech' },
   // 글로벌 Tech/AI
   { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/', type: 'rss', content_type: 'global', category: 'tech' },
   { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', type: 'rss', content_type: 'global', category: 'tech' },
