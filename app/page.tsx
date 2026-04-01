@@ -364,7 +364,7 @@ export default function Dashboard() {
           )}
 
           {runs[0]?.executive_brief && (
-            <div style={{ padding: 16, background: '#eff6ff', borderLeft: '4px solid #2563eb', borderRadius: 4, marginBottom: 24 }}>
+            <div style={{ padding: 16, background: '#eff6ff', borderRadius: 8, marginBottom: 24 }}>
               <h2 style={{ fontSize: 14, fontWeight: 'bold', color: '#1e3a5f', margin: '0 0 8px' }}>🎯 최신 브리프</h2>
               <p style={{ fontSize: 14, color: '#374151', whiteSpace: 'pre-line', margin: 0, lineHeight: 1.6 }}>{runs[0].executive_brief}</p>
             </div>

@@ -51,7 +51,7 @@ export function renderNewsletter(data: NewsletterData): string {
         </td></tr>
 
         <!-- BLUF -->
-        <tr><td style="background:#EFF6FF;padding:14px 16px;border-left:4px solid #1E40AF;">
+        <tr><td style="background:#EFF6FF;padding:14px 16px;border-radius:8px;">
           <h2 style="margin:0 0 8px;font-size:15px;color:#1E3A5F;">🎯 오늘의 핵심</h2>
           <div style="font-size:14px;line-height:1.7;color:#1F2937;white-space:pre-line;">${esc(briefText)}</div>
         </td></tr>
@@ -197,7 +197,7 @@ function renderRedCard(a: Article): string {
       </td></tr>
     </table>` : '';
 
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid #EF4444;margin-bottom:16px;">
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;border-radius:8px;overflow:hidden;">
     <tr><td style="padding:12px 16px;background:#FEF2F2;">
       <div style="font-size:11px;color:#DC2626;font-weight:bold;">${esc(a.category || '')} · ${a.relevance_score || 0}/10</div>
       <div style="font-size:16px;font-weight:600;color:#1F2937;margin:4px 0;">
@@ -206,7 +206,7 @@ function renderRedCard(a: Article): string {
       <div style="font-size:12px;color:#6B7280;">${esc(a.source || '')} · ${esc(a.published_at || '')}</div>
       ${a.deep_summary ? `<div style="font-size:14px;color:#374151;margin-top:8px;line-height:1.6;">${esc(a.deep_summary)}</div>` : ''}
       ${a.impact_comment ? `<div style="font-size:13px;color:#4B5563;margin-top:6px;line-height:1.5;">${esc(a.impact_comment)}</div>` : ''}
-      ${findings ? `<div style="margin-top:8px;padding-left:12px;border-left:2px solid #3B82F6;">${findings}</div>` : ''}
+      ${findings ? `<div style="margin-top:8px;padding:8px 12px;background:#EFF6FF;border-radius:6px;">${findings}</div>` : ''}
       ${actionCard}
     </td></tr>
   </table>`;
@@ -237,7 +237,7 @@ function renderCompactList(articles: Article[]): string {
 }
 
 function renderYellowCard(a: Article): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid #F59E0B;margin-bottom:12px;">
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-radius:8px;overflow:hidden;">
     <tr><td style="padding:10px 16px;">
       <a href="${esc(a.url)}" style="font-size:14px;color:#1F2937;text-decoration:none;font-weight:600;">${esc(a.title)}</a>
       <div style="font-size:12px;color:#6B7280;margin-top:2px;">${esc(a.source || '')} · ${esc(a.category || '')} · ${a.relevance_score || '-'}/10</div>
@@ -249,7 +249,7 @@ function renderYellowCard(a: Article): string {
 
 function renderTrends(trends: Trend[]): string {
   const cards = trends.map((t) => `
-    <div style="margin-bottom:12px;padding:10px 16px;background:#F0FDF4;border-left:4px solid #22C55E;">
+    <div style="margin-bottom:12px;padding:10px 16px;background:#F0FDF4;border-radius:8px;">
       <div style="font-size:14px;font-weight:600;color:#166534;">${esc(t.trend_title)} <span style="font-size:11px;color:#6B7280;">(${t.strength})</span></div>
       <div style="font-size:13px;color:#374151;margin-top:4px;line-height:1.5;">${esc(t.trend_description)}</div>
     </div>`

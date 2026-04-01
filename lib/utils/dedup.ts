@@ -5,7 +5,15 @@ import { createHash } from 'crypto';
 function normalizeUrl(url: string): string {
   try {
     const u = new URL(url);
-    return `${u.hostname}${u.pathname.replace(/\/$/, '')}`.toLowerCase();
+    // 추적 파라미터 제거 (utm_*, fbclid 등)
+    const cleanParams = new URLSearchParams();
+    u.searchParams.forEach((v, k) => {
+      if (!k.startsWith('utm_') && k !== 'fbclid' && k !== 'gclid' && k !== 'ref') {
+        cleanParams.set(k, v);
+      }
+    });
+    const query = cleanParams.toString();
+    return `${u.hostname}${u.pathname.replace(/\/$/, '')}${query ? '?' + query : ''}`.toLowerCase();
   } catch {
     return url.toLowerCase();
   }
