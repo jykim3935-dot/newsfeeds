@@ -106,11 +106,15 @@ function renderCard(a: Article): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #E5E7EB;">
     <tr><td style="padding:14px 16px;background:${urgencyBg};">
       <!-- 태그 -->
-      <div style="margin-bottom:8px;">
-        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#FFF;background:${urgencyColor};">${urgencyLabel}</span>
-        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;color:#374151;background:#E5E7EB;margin-left:4px;">${esc(catLabel)}</span>
-        <span style="float:right;font-size:12px;font-weight:700;color:${urgencyColor};">${a.relevance_score || '-'}/10</span>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+        <tr>
+          <td>
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#FFF;background:${urgencyColor};">${urgencyLabel}</span>
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;color:#374151;background:#E5E7EB;margin-left:4px;">${esc(catLabel)}</span>
+          </td>
+          <td align="right" style="font-size:12px;font-weight:700;color:${urgencyColor};">${a.relevance_score || '-'}/10</td>
+        </tr>
+      </table>
       <!-- 제목 -->
       <div style="font-size:15px;font-weight:600;color:#111;line-height:1.5;margin-bottom:4px;">
         <a href="${esc(a.url)}" style="color:#111;text-decoration:none;">${esc(a.title)}</a>
